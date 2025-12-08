@@ -24,9 +24,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
-
-        {/* 📌 TAMBAHAN 2: Daftarkan Route untuk Game Anda */}
-        <Route path="/pair-or-no-pair/:gameId" element={<PairOrNoPairGame />} />
+        <Route
+          path="/pair-or-no-pair/play/:gameId"
+          element={<PairOrNoPairGame />}
+        />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
