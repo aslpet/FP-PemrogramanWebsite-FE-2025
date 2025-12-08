@@ -667,6 +667,10 @@ const PairOrNoPairGame = () => {
   const [difficulty, setDifficulty] = useState<Difficulty>("normal"); // Difficulty Level
   const [personalBest, setPersonalBest] = useState<number>(0); // Personal Best
   const [isNewBest, setIsNewBest] = useState(false); // New Best Flag
+  const [leaderboardRank, setLeaderboardRank] = useState<number | null>(null); // Leaderboard Rank
+  const [leaderboardList, setLeaderboardList] = useState<
+    { rank: number; username: string; score: number }[]
+  >([]); // Leaderboard List
 
   // Load Personal Best from localStorage
   useEffect(() => {
@@ -1101,13 +1105,46 @@ const PairOrNoPairGame = () => {
   // 9. FINISH GAME
   const handleFinish = async () => {
     // Sound is handled by useEffect on gameState change
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/game/play-count`, {
+      await fetch(`${API_URL}/api/game/play-count`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ game_id: gameId }),
       });
+
+      // Submit score to leaderboard
+      const response = await fetch(
+        `${API_URL}/api/game/game-type/pair-or-no-pair/${gameId}/evaluate`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            score: score,
+            difficulty: difficulty,
+            time_taken: timer,
+          }),
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data?.rank) {
+          setLeaderboardRank(data.data.rank);
+        }
+      }
+
+      // Fetch leaderboard list
+      const lbResponse = await fetch(
+        `${API_URL}/api/game/game-type/pair-or-no-pair/${gameId}/leaderboard?difficulty=${difficulty}`,
+      );
+      if (lbResponse.ok) {
+        const lbData = await lbResponse.json();
+        if (lbData.data) {
+          setLeaderboardList(lbData.data);
+        }
+      }
     } catch (error) {
       console.error("Error updating play count:", error);
     }
@@ -1478,6 +1515,60 @@ const PairOrNoPairGame = () => {
               {Math.max(score, personalBest).toLocaleString()}
             </span>
           </div>
+
+          {/* Leaderboard Rank */}
+          {leaderboardRank && (
+            <div className="flex items-center gap-2 mb-6 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-xl px-4 py-2">
+              <span className="text-2xl">🏆</span>
+              <span className="text-white font-bold">Your Rank:</span>
+              <span className="text-3xl font-black text-yellow-400">
+                #{leaderboardRank}
+              </span>
+            </div>
+          )}
+
+          {/* Leaderboard List */}
+          {leaderboardList.length > 0 && (
+            <div className="w-full max-w-md mb-6 bg-[#1e293b]/80 backdrop-blur-md border border-slate-700 rounded-2xl p-4">
+              <h3 className="text-center text-lg font-bold text-yellow-400 mb-4">
+                🏆 TOP 10 LEADERBOARD
+              </h3>
+              <div className="space-y-2">
+                {leaderboardList.map((entry) => (
+                  <div
+                    key={entry.rank}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg ${
+                      entry.rank === leaderboardRank
+                        ? "bg-yellow-500/20 border border-yellow-500/50"
+                        : "bg-slate-800/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`w-8 h-8 flex items-center justify-center rounded-full font-bold ${
+                          entry.rank === 1
+                            ? "bg-yellow-500 text-black"
+                            : entry.rank === 2
+                              ? "bg-slate-400 text-black"
+                              : entry.rank === 3
+                                ? "bg-amber-600 text-white"
+                                : "bg-slate-700 text-slate-300"
+                        }`}
+                      >
+                        {entry.rank}
+                      </span>
+                      <span className="text-white font-medium">
+                        {entry.username}
+                      </span>
+                    </div>
+                    <span className="text-green-400 font-bold">
+                      {entry.score.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl px-4 relative z-10">
             <div className="flex-1 bg-[#1e293b]/80 backdrop-blur-md border border-slate-700 rounded-2xl p-4 text-center shadow-xl">
