@@ -59,7 +59,7 @@ export default function MyProjectsPage() {
 
   const handleDeleteProject = async (projectId: string) => {
     try {
-      await api.delete(`/api/game/anagram/${projectId}`);
+      await api.delete(`/api/game/game-type/anagram/${projectId}`);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
       toast.success("Project deleted successfully!");
     } catch (err) {
@@ -74,7 +74,10 @@ export default function MyProjectsPage() {
       form.append("is_publish", String(isPublish));
 
       // Kirim permintaan PATCH ke server menggunakan Axios
-      const response = await api.patch(`/api/game/anagram/${gameId}`, form);
+      const response = await api.patch(
+        `/api/game/game-type/anagram/${gameId}`,
+        form,
+      );
 
       // Cek status HTTP response untuk memastikan bahwa request berhasil
       if (response.status !== 200) {

@@ -143,7 +143,7 @@ const PlayAnagram = () => {
       setError(null);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/game/anagram/${id}/play/public`,
+          `${API_BASE_URL}/api/game/game-type/anagram/${id}/play/public`,
           {
             method: "GET",
             headers: {

@@ -72,7 +72,7 @@ const EditAnagram = () => {
     const fetchAnagram = async () => {
       setLoadingData(true);
       try {
-        const res = await api.get(`/api/game/anagram/${id}`);
+        const res = await api.get(`/api/game/game-type/anagram/${id}`);
         const data = res.data.data;
 
         console.log("=== FULL DATA ===", data);
@@ -322,7 +322,7 @@ const EditAnagram = () => {
       // Debugging: Cek console browser kalau masih error
       console.log("Payload Questions:", questionsPayload);
 
-      await api.patch(`/api/game/anagram/${id}`, formData, {
+      await api.patch(`/api/game/game-type/anagram/${id}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
