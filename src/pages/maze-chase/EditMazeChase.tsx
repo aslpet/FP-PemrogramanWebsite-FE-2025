@@ -234,6 +234,8 @@ function EditMazeChase() {
     const newAnswers = [...questions[qIndex].answers];
     newAnswers[aIndex] = { ...newAnswers[aIndex], text: value };
     updateQuestion(qIndex, { answers: newAnswers });
+    // Real-time validation saat answer berubah
+    validateAnswers(qIndex);
   };
 
   const handleCorrectAnswer = (qIndex: number, aIndex: number) => {
@@ -242,15 +244,21 @@ function EditMazeChase() {
       isCorrect: i === aIndex,
     }));
     updateQuestion(qIndex, { answers: newAnswers });
+    // Real-time validation saat correct answer dipilih
+    validateAnswers(qIndex);
   };
 
   const handleQuestionTextChange = (qIndex: number, value: string) => {
     updateQuestion(qIndex, { questionText: value });
+    // Real-time validation saat question text berubah
+    validateQuestionText(qIndex, value);
   };
 
   const handleThumbnailChange = (file: File | null) => {
     setThumbnail(file);
     if (file) setThumbnailPreview(URL.createObjectURL(file));
+    // Real-time validation saat thumbnail berubah
+    validateThumbnail(file);
   };
 
   // --- Validation Function ---
@@ -325,6 +333,94 @@ function EditMazeChase() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Real-time validation untuk title
+  const validateTitle = (value: string) => {
+    const newErrors = { ...formErrors };
+    if (!value.trim()) {
+      newErrors["title"] = "Game title is required";
+    } else if (value.trim().length < 3) {
+      newErrors["title"] = "Game title must be at least 3 characters";
+    } else {
+      delete newErrors["title"];
+    }
+    setFormErrors(newErrors);
+  };
+
+  // Real-time validation untuk description
+  const validateDescription = (value: string) => {
+    const newErrors = { ...formErrors };
+    if (!value.trim()) {
+      newErrors["description"] = "Description is required";
+    } else if (value.trim().length < 5) {
+      newErrors["description"] = "Description must be at least 5 characters";
+    } else {
+      delete newErrors["description"];
+    }
+    setFormErrors(newErrors);
+  };
+
+  // Real-time validation untuk mapId
+  const validateMapId = (value: string) => {
+    const newErrors = { ...formErrors };
+    if (!value) {
+      newErrors["mapId"] = "Map selection is required";
+    } else {
+      delete newErrors["mapId"];
+    }
+    setFormErrors(newErrors);
+  };
+
+  // Real-time validation untuk thumbnail
+  const validateThumbnail = (file: File | null) => {
+    const newErrors = { ...formErrors };
+    if (!file && !thumbnailPreview) {
+      newErrors["thumbnail"] = "Thumbnail image is required";
+    } else {
+      delete newErrors["thumbnail"];
+    }
+    setFormErrors(newErrors);
+  };
+
+  // Real-time validation untuk question text
+  const validateQuestionText = (qIndex: number, value: string) => {
+    const newErrors = { ...formErrors };
+    if (!value.trim()) {
+      newErrors[`questions.${qIndex}.text`] = "Question text is required";
+    } else if (value.trim().length < 5) {
+      newErrors[`questions.${qIndex}.text`] =
+        "Question must be at least 5 characters";
+    } else {
+      delete newErrors[`questions.${qIndex}.text`];
+    }
+    setFormErrors(newErrors);
+  };
+
+  // Real-time validation untuk answers
+  const validateAnswers = (qIndex: number) => {
+    const newErrors = { ...formErrors };
+    const q = questions[qIndex];
+    const hasAtLeastTwoAnswers =
+      q.answers.filter((a) => a.text.trim()).length >= 2;
+
+    if (!hasAtLeastTwoAnswers) {
+      newErrors[`questions.${qIndex}.answers`] =
+        "Minimum 2 answer options required";
+    } else {
+      delete newErrors[`questions.${qIndex}.answers`];
+    }
+
+    // Check if at least one answer is correct
+    const hasCorrectAnswer = q.answers.some((a) => a.isCorrect);
+    if (!hasCorrectAnswer) {
+      newErrors[`questions.${qIndex}.correct`] =
+        "Must mark one answer as correct";
+    } else {
+      delete newErrors[`questions.${qIndex}.correct`];
+    }
+
+    setFormErrors(newErrors);
+  };
+
   const handleSaveDraft = () => {
     // Validate before saving draft
     if (!validateAllQuestions()) {
@@ -356,10 +452,21 @@ function EditMazeChase() {
   const handleSubmit = async () => {
     // Validate all questions first
     if (!validateAllQuestions()) {
-      const errorCount = Object.keys(formErrors).length;
-      toast.error(
-        `Please fix ${errorCount} validation error(s) before updating the maze`,
-      );
+      const errors = Object.keys(formErrors);
+      const errorMessages = errors.map((key) => {
+        if (key === "title") return "Game title";
+        if (key === "description") return "Description";
+        if (key === "mapId") return "Maze map";
+        if (key === "thumbnail") return "Thumbnail image";
+        if (key.includes("questionText")) return "Question text";
+        if (key.includes("answers")) return "Answer options";
+        if (key.includes("correct")) return "Correct answer selection";
+        if (key.includes("countdownMinutes")) return "Countdown timer";
+        return key;
+      });
+      const uniqueMessages = [...new Set(errorMessages)];
+      const fieldsList = uniqueMessages.join(", ");
+      toast.error(`Please fill in required fields: ${fieldsList}`);
       return;
     }
 
@@ -417,6 +524,7 @@ function EditMazeChase() {
       String(settings.isAnswerRandomized),
     );
     formData.append("countdown_minutes", String(settings.countdownMinutes));
+    formData.append("is_publish_immediately", String(true));
 
     const filesToUpload: File[] = [];
     const questionImageFileIndex: (number | string | undefined)[] = new Array(
@@ -587,7 +695,10 @@ function EditMazeChase() {
                     placeholder="Enter the name of your mysterious maze..."
                     className="bg-black/70 border-gray-700/50 text-gray-300 rounded-xl px-4 py-4 placeholder:text-gray-600 focus:border-[#c9a961]/50 transition-all"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      validateTitle(e.target.value);
+                    }}
                   />
                   {formErrors["title"] && (
                     <p className="text-red-400 text-sm flex items-center gap-1">
@@ -605,7 +716,10 @@ function EditMazeChase() {
                     className="w-full bg-black/70 border border-gray-700/50 text-gray-300 rounded-xl px-4 py-4 placeholder:text-gray-600 focus:border-[#c9a961]/50 transition-all resize-none"
                     rows={4}
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) => {
+                      setDescription(e.target.value);
+                      validateDescription(e.target.value);
+                    }}
                   />
                   {formErrors["description"] && (
                     <p className="text-red-400 text-sm flex items-center gap-1">
@@ -621,7 +735,9 @@ function EditMazeChase() {
                   <div className="space-y-3">
                     <button
                       type="button"
-                      onClick={() => setShowMapDropdown(!showMapDropdown)}
+                      onClick={() => {
+                        setShowMapDropdown(!showMapDropdown);
+                      }}
                       className="w-full flex items-center justify-between px-4 py-4 bg-black/70 border border-gray-700/50 rounded-xl hover:border-[#c9a961]/50 transition-all text-gray-300"
                     >
                       <span>
@@ -645,6 +761,7 @@ function EditMazeChase() {
                               type="button"
                               onClick={() => {
                                 setMapId(map.id);
+                                validateMapId(map.id);
                                 setShowMapDropdown(false);
                               }}
                               className={`group overflow-hidden rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${
@@ -933,6 +1050,14 @@ function EditMazeChase() {
                         ...prev,
                         countdownMinutes: val,
                       }));
+                      const newErrors = { ...formErrors };
+                      delete newErrors["settings.countdownMinutes"];
+                      setFormErrors(newErrors);
+                    } else if (val < 1 || val > 60) {
+                      const newErrors = { ...formErrors };
+                      newErrors["settings.countdownMinutes"] =
+                        "Countdown must be between 1-60 minutes";
+                      setFormErrors(newErrors);
                     }
                   }}
                 />
