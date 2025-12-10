@@ -15,6 +15,10 @@ import ProtectedRoute from "./routes/ProtectedRoutes";
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
 
+// 📌 TAMBAHAN 2: Import Komponen Game Spell the Word
+import SpellTheWordGame from "./pages/spell-the-word";
+import CreateSpellTheWord from "./pages/spell-the-word/create";
+
 function App() {
   return (
     <>
@@ -28,6 +32,8 @@ function App() {
           path="/pair-or-no-pair/play/:gameId"
           element={<PairOrNoPairGame />}
         />
+        {/* 📌 Route untuk bermain Spell the Word */}
+        <Route path="/spell-the-word/play/:id" element={<SpellTheWordGame />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />
@@ -37,6 +43,15 @@ function App() {
           <Route
             path="/create-pair-or-no-pair"
             element={<CreatePairOrNoPair />}
+          />
+          {/* 📌 Route untuk membuat Spell the Word */}
+          <Route
+            path="/create-spell-the-word"
+            element={<CreateSpellTheWord />}
+          />
+          <Route
+            path="/spell-the-word/edit/:id"
+            element={<CreateSpellTheWord />}
           />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
         </Route>
