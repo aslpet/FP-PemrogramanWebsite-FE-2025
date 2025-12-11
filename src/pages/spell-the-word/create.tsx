@@ -477,26 +477,48 @@ const CreateSpellTheWord = () => {
         formDataToSend.append("thumbnail_image", formData.thumbnail_image);
       }
 
-      // Prepare words data and files
-      const wordsData = validWords.map((word, index) => ({
-        word_text: word.word_text.toLowerCase().trim(),
-        word_image_array_index: word.word_image
-          ? index
-          : word.word_image_preview || undefined,
-        word_audio_array_index: word.word_audio ? index : undefined,
-        hint: word.hint || undefined,
-      }));
+      // Calculate proper indices for files - track actual file upload order
+      let imageFileIndex = 0;
+      let audioFileIndex = 0;
+
+      // Prepare words data with correct file indices
+      const wordsData = validWords.map((word) => {
+        const wordData: {
+          word_text: string;
+          word_image_array_index?: number | string;
+          word_audio_array_index?: number | string;
+          hint?: string;
+        } = {
+          word_text: word.word_text.toLowerCase().trim(),
+          hint: word.hint || undefined,
+        };
+
+        // For image: if there's a new file, use the current image index; if only preview (edit mode), use the URL
+        if (word.word_image) {
+          wordData.word_image_array_index = imageFileIndex++;
+        } else if (word.word_image_preview) {
+          // Edit mode: existing image URL
+          wordData.word_image_array_index = word.word_image_preview;
+        }
+
+        // For audio: if there's a new file, use the current audio index
+        if (word.word_audio) {
+          wordData.word_audio_array_index = audioFileIndex++;
+        }
+
+        return wordData;
+      });
 
       formDataToSend.append("words", JSON.stringify(wordsData));
 
-      // Add image files
+      // Add image files (in order)
       validWords.forEach((word) => {
         if (word.word_image) {
           formDataToSend.append("files_to_upload", word.word_image);
         }
       });
 
-      // Add audio files
+      // Add audio files (in order)
       validWords.forEach((word) => {
         if (word.word_audio) {
           formDataToSend.append("audio_files", word.word_audio);
@@ -522,7 +544,11 @@ const CreateSpellTheWord = () => {
       navigate("/my-projects");
     } catch (error) {
       console.error("Failed to save game:", error);
-      toast.error("Failed to save game. Please try again.");
+      // Extract error message from axios response if available
+      const errorMessage =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message || "Failed to save game. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsSaving(false);
     }

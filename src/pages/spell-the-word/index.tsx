@@ -62,9 +62,11 @@ const useSoundEffects = (isSoundOn: boolean) => {
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        (window as Window & { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext)();
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
+      audioContextRef.current = new AudioContextClass();
     }
     return audioContextRef.current;
   }, []);
@@ -491,6 +493,7 @@ const SpellTheWordGame = () => {
   // Refs
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch Game Data
   useEffect(() => {
@@ -598,6 +601,27 @@ const SpellTheWordGame = () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [gameState, isPaused, isCorrect, isWrong]);
+
+  // Preload audio when word changes
+  useEffect(() => {
+    if (
+      gameState === "playing" &&
+      gameData &&
+      gameData.words[currentWordIndex]
+    ) {
+      const currentWord = gameData.words[currentWordIndex];
+      if (currentWord.word_audio) {
+        const audioUrl = currentWord.word_audio.startsWith("http")
+          ? currentWord.word_audio
+          : `${import.meta.env.VITE_API_URL}/${currentWord.word_audio}`;
+        const audio = new Audio(audioUrl);
+        audio.preload = "auto";
+        audioRef.current = audio;
+      } else {
+        audioRef.current = null;
+      }
+    }
+  }, [gameState, gameData, currentWordIndex]);
 
   // Place letter in slot
   const placeLetter = useCallback(
@@ -1024,17 +1048,6 @@ const SpellTheWordGame = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                {currentWord.word_audio && (
-                  <button
-                    onClick={() => {
-                      const audio = new Audio(currentWord.word_audio!);
-                      audio.play();
-                    }}
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
-                  >
-                    🔊
-                  </button>
-                )}
                 <button
                   onClick={() => setIsPaused(true)}
                   className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
@@ -1053,26 +1066,48 @@ const SpellTheWordGame = () => {
 
           {/* Main Game Area */}
           <main className="flex-1 flex flex-col items-center justify-center px-4 py-6 gap-6">
-            {/* Image */}
-            <div className="w-64 h-48 sm:w-80 sm:h-60 md:w-96 md:h-72 rounded-xl overflow-hidden bg-white shadow-2xl border-4 border-white">
-              {currentWord.word_image ? (
-                <img
-                  src={
-                    currentWord.word_image.startsWith("http")
-                      ? currentWord.word_image
-                      : `${import.meta.env.VITE_API_URL}/${currentWord.word_image}`
-                  }
-                  alt="Spell this word"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://via.placeholder.com/400x300?text=Image";
+            {/* Image with Audio Button */}
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-64 h-48 sm:w-80 sm:h-60 md:w-96 md:h-72 rounded-xl overflow-hidden bg-white shadow-2xl border-4 border-white">
+                {currentWord.word_image ? (
+                  <img
+                    src={
+                      currentWord.word_image.startsWith("http")
+                        ? currentWord.word_image
+                        : `${import.meta.env.VITE_API_URL}/${currentWord.word_image}`
+                    }
+                    alt="Spell this word"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        "https://via.placeholder.com/400x300?text=Image";
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+                    <span className="text-6xl">🖼️</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Audio Play Button - centered below image */}
+              {currentWord.word_audio && (
+                <button
+                  onClick={() => {
+                    if (audioRef.current) {
+                      audioRef.current.currentTime = 0;
+                      audioRef.current
+                        .play()
+                        .catch((err) =>
+                          console.error("Audio play error:", err),
+                        );
+                    }
                   }}
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
-                  <span className="text-6xl">🖼️</span>
-                </div>
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all border-b-4 border-amber-700"
+                >
+                  <span className="text-2xl">🔊</span>
+                  <span>Play Sound</span>
+                </button>
               )}
             </div>
 
