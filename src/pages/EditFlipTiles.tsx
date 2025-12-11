@@ -50,20 +50,26 @@ function EditFlipTiles() {
         setIsPublished(game.is_published);
 
         // Parse game_json to get tiles
-        if (game.game_json && game.game_json.tiles) {
+        if (
+          game.game_json &&
+          game.game_json.tiles &&
+          game.game_json.tiles.length > 0
+        ) {
           setTiles(
             game.game_json.tiles.map((t: { label: string }) => ({
               id: randomId(),
               label: t.label,
             })),
           );
+        } else {
+          // Ensure at least one default tile for editing
+          setTiles([{ id: randomId(), label: "Tile 1" }]);
         }
       } catch (error: unknown) {
         console.error("Fetch error:", error);
         // Backend handles authorization, frontend receives 403 if unauthorized
         toast.error("Failed to load game or you don't have permission");
         // Don't auto-redirect, let user see the error state
-        setLoading(false);
       } finally {
         setLoading(false);
       }
@@ -214,7 +220,7 @@ function EditFlipTiles() {
                 {existingThumbnail && !thumbnail && (
                   <div className="mb-2">
                     <img
-                      src={`${import.meta.env.VITE_API_URL}/${existingThumbnail}`}
+                      src={`${import.meta.env.VITE_API_URL}${existingThumbnail.startsWith("/") ? "" : "/"}${existingThumbnail}`}
                       alt="Current thumbnail"
                       className="w-32 h-32 object-cover rounded border"
                     />
