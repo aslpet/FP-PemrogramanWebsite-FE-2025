@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { Label } from "@/components/ui/label";
 import { FormField } from "@/components/ui/form-field";
+import { Textarea } from "@/components/ui/textarea"; // Import Textarea
 import Dropzone from "@/components/ui/dropzone";
 import { Typography } from "@/components/ui/typography";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
@@ -17,9 +18,8 @@ interface CrosswordItem {
 export default function CreateCrossword() {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
-  // setDescription dihapus dari destructuring karena belum dipakai di JSX user saat ini,
-  // atau kita biarkan description saja agar tidak error.
-  const [description] = useState("");
+  // Kembalikan setDescription agar bisa mengubah state
+  const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [items, setItems] = useState<CrosswordItem[]>([
     { word: "", clue: "" },
@@ -28,9 +28,6 @@ export default function CreateCrossword() {
     { word: "", clue: "" },
     { word: "", clue: "" },
   ]);
-
-  // State settings dihapus karena belum dipakai logic-nya
-  // const [settings, setSettings] = useState({ isPublishImmediately: false });
 
   const addItem = () => setItems([...items, { word: "", clue: "" }]);
   const removeItem = (index: number) => {
@@ -81,8 +78,12 @@ export default function CreateCrossword() {
   return (
     <div className="w-full bg-slate-50 min-h-screen flex flex-col p-8">
       <div className="max-w-3xl mx-auto w-full space-y-6">
-        <Button variant="ghost" onClick={() => navigate("/create-projects")}>
-          <ArrowLeft /> Back
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/create-projects")}
+          className="pl-0"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
         </Button>
 
         <Typography variant="h3">Create Crossword</Typography>
@@ -94,50 +95,67 @@ export default function CreateCrossword() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
+
+          {/* Bagian Deskripsi Ditambahkan Di Sini */}
+          <div className="grid w-full items-center gap-1.5">
+            <Label>Description</Label>
+            <Textarea
+              className="bg-[#F3F3F5]"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Game description..."
+            />
+          </div>
+
           <Dropzone label="Thumbnail" required onChange={setThumbnail} />
         </div>
 
         <div className="bg-white p-6 rounded-xl border space-y-4">
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <Typography variant="h4">Words & Clues</Typography>
             <Button size="sm" variant="outline" onClick={addItem}>
-              <Plus /> Add Word
+              <Plus className="mr-2 h-4 w-4" /> Add Word
             </Button>
           </div>
-          {items.map((item, idx) => (
-            <div key={idx} className="flex gap-4 items-end border-b pb-4">
-              <div className="flex-1">
-                <Label>Word (Answer)</Label>
-                <input
-                  className="w-full border rounded p-2 mt-1 uppercase"
-                  value={item.word}
-                  onChange={(e) =>
-                    handleItemChange(idx, "word", e.target.value)
-                  }
-                  placeholder="e.g. REACT"
-                />
-              </div>
-              <div className="flex-[2]">
-                <Label>Clue (Question)</Label>
-                <input
-                  className="w-full border rounded p-2 mt-1"
-                  value={item.clue}
-                  onChange={(e) =>
-                    handleItemChange(idx, "clue", e.target.value)
-                  }
-                  placeholder="e.g. A JavaScript Library"
-                />
-              </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-red-500"
-                onClick={() => removeItem(idx)}
+          <div className="space-y-4">
+            {items.map((item, idx) => (
+              <div
+                key={idx}
+                className="flex gap-4 items-end border-b pb-4 last:border-0"
               >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
+                <div className="flex-1">
+                  <Label>Word (Answer)</Label>
+                  <input
+                    className="w-full border rounded-md px-3 py-2 mt-1 uppercase text-sm bg-slate-50"
+                    value={item.word}
+                    onChange={(e) =>
+                      handleItemChange(idx, "word", e.target.value)
+                    }
+                    placeholder="e.g. REACT"
+                  />
+                </div>
+                <div className="flex-[2]">
+                  <Label>Clue (Question)</Label>
+                  <input
+                    className="w-full border rounded-md px-3 py-2 mt-1 text-sm bg-slate-50"
+                    value={item.clue}
+                    onChange={(e) =>
+                      handleItemChange(idx, "clue", e.target.value)
+                    }
+                    placeholder="e.g. A JavaScript Library"
+                  />
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-red-500 shrink-0"
+                  onClick={() => removeItem(idx)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="flex justify-end gap-4">

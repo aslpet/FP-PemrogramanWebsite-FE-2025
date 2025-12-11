@@ -26,6 +26,12 @@ interface CrosswordItem {
   clue: string;
 }
 
+// Interface baru untuk menangani data raw dari API
+interface ApiCrosswordItem {
+  word?: string;
+  clue?: string;
+}
+
 export default function EditCrossword() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -36,7 +42,7 @@ export default function EditCrossword() {
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-  const [isPublish, setIsPublish] = useState(false); // State untuk menyimpan status publish saat ini
+  const [isPublish, setIsPublish] = useState(false);
 
   const [items, setItems] = useState<CrosswordItem[]>([{ word: "", clue: "" }]);
 
@@ -57,19 +63,17 @@ export default function EditCrossword() {
           );
         }
 
-        // Ambil items dari response (sesuaikan jika struktur backend berbeda, misal di game_json)
         const fetchedItems = data.items || data.game_json?.items || [];
 
         if (fetchedItems.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // Menggunakan tipe ApiCrosswordItem menggantikan any
           setItems(
-            fetchedItems.map((i: any) => ({
+            fetchedItems.map((i: ApiCrosswordItem) => ({
               word: i.word || "",
               clue: i.clue || "",
             })),
           );
         } else {
-          // Fallback jika kosong, siapkan 5 slot
           setItems(Array(5).fill({ word: "", clue: "" }));
         }
       } catch (error) {
@@ -109,7 +113,6 @@ export default function EditCrossword() {
 
   const handleSubmit = async (publishStatus: boolean) => {
     if (!title.trim()) return toast.error("Title is required");
-    // Validasi thumbnail: harus ada file baru ATAU preview URL lama
     if (!thumbnail && !thumbnailPreview)
       return toast.error("Thumbnail is required");
 
@@ -271,7 +274,6 @@ export default function EditCrossword() {
           >
             <Save className="mr-2 h-4 w-4" /> Save Draft
           </Button>
-          {/* Tombol Publish akan menyesuaikan text jika statusnya sudah published atau belum */}
           <Button onClick={() => handleSubmit(true)} disabled={isSubmitting}>
             <Eye className="mr-2 h-4 w-4" />{" "}
             {isPublish ? "Update & Publish" : "Publish"}
