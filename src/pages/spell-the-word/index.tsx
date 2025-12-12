@@ -68,9 +68,11 @@ const useSoundEffects = (isSoundOn: boolean) => {
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext ||
-        (window as Window & { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext)();
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
+      audioContextRef.current = new AudioContextClass();
     }
     return audioContextRef.current;
   }, []);
@@ -614,6 +616,7 @@ const SpellTheWordGame = () => {
   // Refs
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch Game Data
   useEffect(() => {
@@ -774,6 +777,29 @@ const SpellTheWordGame = () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [gameState, isPaused, isCorrect, isWrong]);
+
+  // Preload audio when word changes
+  useEffect(() => {
+    if (
+      gameState === "playing" &&
+      gameData &&
+      gameData.words[currentWordIndex]
+    ) {
+      const currentWord = gameData.words[currentWordIndex];
+      if (currentWord.word_audio) {
+        const audioUrl =
+          currentWord.word_audio.startsWith("http") ||
+          currentWord.word_audio.startsWith("data:")
+            ? currentWord.word_audio
+            : `${import.meta.env.VITE_API_URL}/${currentWord.word_audio}`;
+        const audio = new Audio(audioUrl);
+        audio.preload = "auto";
+        audioRef.current = audio;
+      } else {
+        audioRef.current = null;
+      }
+    }
+  }, [gameState, gameData, currentWordIndex]);
 
   // Place letter in slot
   const placeLetter = useCallback(

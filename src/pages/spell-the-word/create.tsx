@@ -23,9 +23,11 @@ interface WordItem {
   word_index: number;
   word_text: string;
   word_image: File | null;
-  word_image_preview: string | null;
+  word_image_preview: string | null; // Full URL for display
+  word_image_path: string | null; // Backend path for update
   word_audio: File | null;
   word_audio_name: string | null;
+  word_audio_url: string | null; // Full audio path for edit mode
   hint: string;
 }
 
@@ -249,8 +251,10 @@ const CreateSpellTheWord = () => {
         word_text: "",
         word_image: null,
         word_image_preview: null,
+        word_image_path: null,
         word_audio: null,
         word_audio_name: null,
+        word_audio_url: null,
         hint: "",
       },
     ],
@@ -287,10 +291,12 @@ const CreateSpellTheWord = () => {
               word_image_preview: w.word_image
                 ? `${import.meta.env.VITE_API_URL}/${w.word_image}`
                 : null,
+              word_image_path: w.word_image || null, // Store backend path for update
               word_audio: null,
               word_audio_name: w.word_audio
                 ? w.word_audio.split("/").pop()
                 : null,
+              word_audio_url: w.word_audio || null, // Store full path for update
               hint: w.hint || "",
             }),
           );
@@ -311,8 +317,10 @@ const CreateSpellTheWord = () => {
                       word_text: "",
                       word_image: null,
                       word_image_preview: null,
+                      word_image_path: null,
                       word_audio: null,
                       word_audio_name: null,
+                      word_audio_url: null,
                       hint: "",
                     },
                   ],
@@ -380,8 +388,10 @@ const CreateSpellTheWord = () => {
       word_text: "",
       word_image: null,
       word_image_preview: null,
+      word_image_path: null,
       word_audio: null,
       word_audio_name: null,
+      word_audio_url: null,
       hint: "",
     };
     updateField("words", [...formData.words, newWord]);
@@ -493,17 +503,20 @@ const CreateSpellTheWord = () => {
           hint: word.hint || undefined,
         };
 
-        // For image: if there's a new file, use the current image index; if only preview (edit mode), use the URL
+        // For image: if there's a new file, use the current image index; if only path (edit mode), use the path
         if (word.word_image) {
           wordData.word_image_array_index = imageFileIndex++;
-        } else if (word.word_image_preview) {
-          // Edit mode: existing image URL
-          wordData.word_image_array_index = word.word_image_preview;
+        } else if (word.word_image_path) {
+          // Edit mode: existing image path (backend path, not full URL)
+          wordData.word_image_array_index = word.word_image_path;
         }
 
-        // For audio: if there's a new file, use the current audio index
+        // For audio: if there's a new file, use the current audio index; if only existing URL (edit mode), use the path
         if (word.word_audio) {
           wordData.word_audio_array_index = audioFileIndex++;
+        } else if (word.word_audio_url) {
+          // Edit mode: existing audio path
+          wordData.word_audio_array_index = word.word_audio_url;
         }
 
         return wordData;
