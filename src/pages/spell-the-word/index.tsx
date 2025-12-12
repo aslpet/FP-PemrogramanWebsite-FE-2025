@@ -1072,7 +1072,8 @@ const SpellTheWordGame = () => {
                 {currentWord.word_image ? (
                   <img
                     src={
-                      currentWord.word_image.startsWith("http")
+                      currentWord.word_image.startsWith("http") ||
+                      currentWord.word_image.startsWith("data:")
                         ? currentWord.word_image
                         : `${import.meta.env.VITE_API_URL}/${currentWord.word_image}`
                     }

@@ -671,6 +671,7 @@ const PairOrNoPairGame = () => {
   const [leaderboardList, setLeaderboardList] = useState<
     { rank: number; username: string; score: number }[]
   >([]); // Leaderboard List
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false); // Loading state
 
   // Load Personal Best from localStorage
   useEffect(() => {
@@ -1115,6 +1116,7 @@ const PairOrNoPairGame = () => {
     // Sound is handled by useEffect on gameState change
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+    setIsLoadingLeaderboard(true);
     try {
       await fetch(`${API_URL}/api/game/play-count`, {
         method: "POST",
@@ -1155,6 +1157,8 @@ const PairOrNoPairGame = () => {
       }
     } catch (error) {
       console.error("Error updating play count:", error);
+    } finally {
+      setIsLoadingLeaderboard(false);
     }
   };
 
@@ -1535,12 +1539,20 @@ const PairOrNoPairGame = () => {
             </div>
           )}
 
-          {/* Leaderboard List */}
-          {leaderboardList.length > 0 && (
-            <div className="w-full max-w-md mb-6 bg-[#1e293b]/80 backdrop-blur-md border border-slate-700 rounded-2xl p-4">
-              <h3 className="text-center text-lg font-bold text-yellow-400 mb-4">
-                🏆 TOP 10 LEADERBOARD
-              </h3>
+          {/* Leaderboard List - Always Visible */}
+          <div className="w-full max-w-md mb-6 bg-[#1e293b]/80 backdrop-blur-md border border-slate-700 rounded-2xl p-4">
+            <h3 className="text-center text-lg font-bold text-yellow-400 mb-4">
+              🏆 TOP 10 LEADERBOARD (
+              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)})
+            </h3>
+            {isLoadingLeaderboard ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                <span className="ml-3 text-slate-400">
+                  Loading leaderboard...
+                </span>
+              </div>
+            ) : leaderboardList.length > 0 ? (
               <div className="space-y-2">
                 {leaderboardList.map((entry) => (
                   <div
@@ -1575,8 +1587,13 @@ const PairOrNoPairGame = () => {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-8 text-slate-400">
+                <p className="text-sm">No leaderboard data yet.</p>
+                <p className="text-xs mt-2">Be the first to play!</p>
+              </div>
+            )}
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-2xl px-4 relative z-10">
             <div className="flex-1 bg-[#1e293b]/80 backdrop-blur-md border border-slate-700 rounded-2xl p-4 text-center shadow-xl">

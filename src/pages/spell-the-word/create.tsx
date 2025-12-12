@@ -555,26 +555,55 @@ const CreateSpellTheWord = () => {
   };
 
   // Preview game
-  const handlePreview = () => {
+  const handlePreview = async () => {
     if (!validateForm()) return;
 
-    // Store preview data in sessionStorage and navigate
-    sessionStorage.setItem(
-      "spell-word-preview",
-      JSON.stringify({
-        name: formData.name,
-        description: formData.description,
-        words: formData.words.map((w) => ({
-          word_text: w.word_text,
-          word_image_preview: w.word_image_preview,
-          hint: w.hint,
-        })),
-        score_per_word: formData.score_per_word,
-        time_limit: formData.time_limit,
-      }),
-    );
+    // Convert image files to base64
+    const convertImageToBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    };
 
-    window.open(`/spell-the-word/play/preview`, "_blank");
+    try {
+      // Convert all word images to base64
+      const wordsWithBase64 = await Promise.all(
+        formData.words.map(async (w) => {
+          let imageData = w.word_image_preview;
+
+          // If word has a file object, convert to base64
+          if (w.word_image) {
+            imageData = await convertImageToBase64(w.word_image);
+          }
+
+          return {
+            word_text: w.word_text,
+            word_image_preview: imageData,
+            hint: w.hint,
+          };
+        }),
+      );
+
+      // Store preview data in sessionStorage and navigate
+      sessionStorage.setItem(
+        "spell-word-preview",
+        JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          words: wordsWithBase64,
+          score_per_word: formData.score_per_word,
+          time_limit: formData.time_limit,
+        }),
+      );
+
+      window.open(`/spell-the-word/play/preview`, "_blank");
+    } catch (error) {
+      console.error("Failed to prepare preview:", error);
+      toast.error("Failed to prepare preview");
+    }
   };
 
   if (isLoading) {
