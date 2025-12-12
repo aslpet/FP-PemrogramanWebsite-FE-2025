@@ -149,11 +149,19 @@ const LetterTile = ({
   index: number;
   onDragStart: (index: number, letter: string) => void;
 }) => {
+  const [isBeingDragged, setIsBeingDragged] = useState(false);
+
   const handleDragStart = (e: React.DragEvent) => {
+    setIsBeingDragged(true);
     e.dataTransfer.setData("letterIndex", index.toString());
     e.dataTransfer.setData("letter", letter);
     e.dataTransfer.setData("source", "pool");
+    e.dataTransfer.effectAllowed = "move";
     onDragStart(index, letter);
+  };
+
+  const handleDragEnd = () => {
+    setIsBeingDragged(false);
   };
 
   return (
@@ -162,17 +170,23 @@ const LetterTile = ({
       disabled={isUsed}
       draggable={!isUsed}
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       className={`
         relative w-14 h-14 sm:w-16 sm:h-16
         rounded-xl font-bold text-2xl sm:text-3xl
-        transition-all duration-200 transform select-none
+        select-none
+        transition-all duration-300 ease-out
         ${
-          isUsed
-            ? "opacity-20 scale-90 bg-slate-600/50 text-slate-500 cursor-not-allowed"
-            : "bg-gradient-to-b from-cyan-400 to-cyan-600 text-white shadow-lg hover:scale-105 hover:shadow-xl cursor-grab active:cursor-grabbing active:scale-95 border-b-4 border-cyan-700"
+          isUsed || isBeingDragged
+            ? "opacity-30 scale-90 bg-slate-600/50 text-slate-500 cursor-not-allowed"
+            : "bg-gradient-to-b from-cyan-400 to-cyan-600 text-white shadow-lg hover:scale-110 hover:shadow-xl cursor-grab active:cursor-grabbing active:scale-95 border-b-4 border-cyan-700 hover:-translate-y-1"
         }
+        ${isBeingDragged ? "ring-2 ring-cyan-300 ring-opacity-50" : ""}
       `}
-      style={{ textShadow: isUsed ? "none" : "0 2px 4px rgba(0,0,0,0.3)" }}
+      style={{
+        textShadow: isUsed ? "none" : "0 2px 4px rgba(0,0,0,0.3)",
+        transform: isUsed ? "scale(0.9)" : undefined,
+      }}
     >
       {letter.toLowerCase()}
     </button>
@@ -190,6 +204,8 @@ const AnswerSlot = ({
   onDrop,
   onDragOver,
   onDragStart,
+  onDragLeave,
+  isDragOver = false,
 }: {
   letter: string | null;
   slotIndex: number;
@@ -205,9 +221,15 @@ const AnswerSlot = ({
   ) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDragStart: (slotIndex: number) => void;
+  onDragLeave?: () => void;
+  isDragOver?: boolean;
 }) => {
+  const [isBeingDragged, setIsBeingDragged] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    setIsHovering(false);
     const letterIndex = parseInt(e.dataTransfer.getData("letterIndex"));
     const droppedLetter = e.dataTransfer.getData("letter");
     const source = e.dataTransfer.getData("source") || "pool";
@@ -216,39 +238,62 @@ const AnswerSlot = ({
 
   const handleDragStart = (e: React.DragEvent) => {
     if (!letter) return;
+    setIsBeingDragged(true);
     e.dataTransfer.setData("slotIndex", slotIndex.toString());
     e.dataTransfer.setData("letter", letter);
     e.dataTransfer.setData("source", "slot");
+    e.dataTransfer.effectAllowed = "move";
     onDragStart(slotIndex);
+  };
+
+  const handleDragEnd = () => {
+    setIsBeingDragged(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!isHovering) setIsHovering(true);
+    onDragOver(e);
+  };
+
+  const handleDragLeave = () => {
+    setIsHovering(false);
+    onDragLeave?.();
   };
 
   return (
     <div
       onClick={onClick}
       onDrop={handleDrop}
-      onDragOver={onDragOver}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
       draggable={!!letter && !isCorrect && !isWrong}
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       className={`
         w-12 h-14 sm:w-14 sm:h-16
         rounded-lg font-bold text-2xl sm:text-3xl
-        transition-all duration-200 transform
         flex items-center justify-center
+        transition-all duration-300 ease-out
+        ${isBeingDragged ? "opacity-30 scale-90" : ""}
         ${
           letter
             ? isCorrect
-              ? "bg-gradient-to-b from-green-400 to-green-600 text-white border-b-4 border-green-700 shadow-lg"
+              ? "bg-gradient-to-b from-green-400 to-green-600 text-white border-b-4 border-green-700 shadow-lg scale-105"
               : isWrong
                 ? "bg-gradient-to-b from-red-400 to-red-600 text-white border-b-4 border-red-700 shadow-lg animate-shake"
-                : "bg-gradient-to-b from-slate-100 to-slate-200 text-slate-800 border-b-4 border-slate-300 shadow-md cursor-grab hover:scale-105"
-            : isSelected
-              ? "bg-cyan-500/30 border-2 border-cyan-400"
-              : "bg-slate-700/30 border-2 border-dashed border-slate-400/50"
+                : "bg-gradient-to-b from-slate-100 to-slate-200 text-slate-800 border-b-4 border-slate-300 shadow-md cursor-grab hover:scale-110 hover:-translate-y-1 active:scale-95"
+            : isHovering || isDragOver
+              ? "bg-cyan-400/40 border-2 border-cyan-300 scale-110 shadow-lg"
+              : isSelected
+                ? "bg-cyan-500/30 border-2 border-cyan-400 scale-105"
+                : "bg-slate-700/30 border-2 border-dashed border-slate-400/50 hover:border-cyan-400/50 hover:bg-slate-600/30"
         }
       `}
     >
       {letter ? (
         <span
+          className="transition-all duration-200"
           style={{
             textShadow:
               letter && !isCorrect && !isWrong
@@ -259,7 +304,9 @@ const AnswerSlot = ({
           {letter.toLowerCase()}
         </span>
       ) : (
-        <span className="text-slate-500/50">_</span>
+        <span className="text-slate-500/50 transition-opacity duration-200">
+          _
+        </span>
       )}
     </div>
   );
@@ -437,13 +484,13 @@ const ResultScreen = ({
 
   return (
     <div
-      className="absolute inset-0 z-[200] flex items-center justify-center"
+      className="absolute inset-0 z-[200] flex items-start justify-center overflow-y-auto py-8"
       style={{
         background:
           "linear-gradient(180deg, #87CEEB 0%, #1E90FF 50%, #006994 100%)",
       }}
     >
-      <div className="bg-white/20 backdrop-blur-md rounded-3xl p-8 mx-4 text-center max-w-md w-full space-y-4 border border-white/30 shadow-2xl">
+      <div className="bg-white/20 backdrop-blur-md rounded-3xl p-8 mx-4 text-center max-w-md w-full space-y-4 border border-white/30 shadow-2xl my-auto min-h-fit">
         <div className="text-6xl mb-2">{feedbackEmoji}</div>
         <h2 className="text-3xl font-bold text-white drop-shadow">
           {feedback}
@@ -476,21 +523,22 @@ const ResultScreen = ({
           ))}
         </div>
 
-        {/* Leaderboard Section */}
+        {/* Leaderboard Section - Top 5 Only */}
         <div className="mt-6 w-full max-w-md">
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-            <h3 className="text-center text-xl font-bold text-yellow-300 mb-4">
-              🏆 Leaderboard
+            <h3 className="text-center text-xl font-bold text-yellow-300 mb-4 flex items-center justify-center gap-2">
+              🏆 <span>Top 5 Leaderboard</span>
             </h3>
             {isLoadingLeaderboard ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
                 <span className="ml-3 text-white/80">Loading...</span>
               </div>
-            ) : leaderboard.length > 0 ? (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {leaderboard.slice(0, 10).map((entry, index) => {
+            ) : (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, index) => {
                   const rank = index + 1;
+                  const entry = leaderboard[index];
                   const getMedalEmoji = (rank: number) => {
                     if (rank === 1) return "🥇";
                     if (rank === 2) return "🥈";
@@ -498,50 +546,76 @@ const ResultScreen = ({
                     return `${rank}.`;
                   };
 
+                  // If entry exists, show the actual data
+                  if (entry) {
+                    return (
+                      <div
+                        key={entry.id}
+                        className="flex items-center justify-between px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl font-bold w-8">
+                            {getMedalEmoji(rank)}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            {entry.user?.profile_picture ? (
+                              <img
+                                src={entry.user.profile_picture}
+                                alt={entry.player_name}
+                                className="w-8 h-8 rounded-full object-cover border-2 border-white/30"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm border-2 border-white/30">
+                                {entry.player_name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="text-white font-medium">
+                              {entry.player_name}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-green-400 font-bold">
+                            {entry.score}/{entry.max_score}
+                          </div>
+                          <div className="text-white/60 text-xs">
+                            {entry.accuracy.toFixed(0)}% •{" "}
+                            {Math.floor(entry.time_taken / 60)}:
+                            {(entry.time_taken % 60)
+                              .toString()
+                              .padStart(2, "0")}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // If no entry, show placeholder
                   return (
                     <div
-                      key={entry.id}
-                      className="flex items-center justify-between px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                      key={`empty-${rank}`}
+                      className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-lg border border-dashed border-white/20"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-xl font-bold w-8">
+                        <span className="text-xl font-bold w-8 text-white/40">
                           {getMedalEmoji(rank)}
                         </span>
                         <div className="flex items-center gap-2">
-                          {entry.user?.profile_picture ? (
-                            <img
-                              src={entry.user.profile_picture}
-                              alt={entry.player_name}
-                              className="w-8 h-8 rounded-full object-cover border-2 border-white/30"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm border-2 border-white/30">
-                              {entry.player_name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <span className="text-white font-medium">
-                            {entry.player_name}
+                          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/30 font-bold text-sm border-2 border-dashed border-white/20">
+                            ?
+                          </div>
+                          <span className="text-white/40 font-medium italic">
+                            — Empty —
                           </span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-green-400 font-bold">
-                          {entry.score}/{entry.max_score}
-                        </div>
-                        <div className="text-white/60 text-xs">
-                          {entry.accuracy.toFixed(0)}% •{" "}
-                          {Math.floor(entry.time_taken / 60)}:
-                          {(entry.time_taken % 60).toString().padStart(2, "0")}
-                        </div>
+                        <div className="text-white/30 font-bold">—</div>
+                        <div className="text-white/20 text-xs">—</div>
                       </div>
                     </div>
                   );
                 })}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-white/60">
-                <p className="text-sm">No scores yet!</p>
-                <p className="text-xs mt-2">Be the first to play!</p>
               </div>
             )}
           </div>
@@ -582,8 +656,11 @@ const SpellTheWordGame = () => {
     "intro",
   );
   const [isPaused, setIsPaused] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [timer, setTimer] = useState(0);
+
+  // Timer per word removed (unused)
+  const [timeLeft, setTimeLeft] = useState<number | null>(null); // Countdown
   const [totalTime, setTotalTime] = useState(0);
 
   // Word Spelling State
@@ -613,10 +690,60 @@ const SpellTheWordGame = () => {
   const { playCorrect, playWrong, playClick, playSuccess, playLetterPlace } =
     useSoundEffects(isSoundOn);
 
+  // Hint reveal state - tracks how many letters of the hint are revealed
+  const [revealedHintCount, setRevealedHintCount] = useState(0);
+
   // Refs
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const themeAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Theme Audio - plays on page load with auto-loop
+  useEffect(() => {
+    // Create audio element for theme music
+    const themeAudio = new Audio("/src/pages/spell-the-word/audio/theme.mp3");
+    themeAudio.loop = true; // Auto-loop when song ends
+    themeAudio.volume = 0.3; // Background music volume (30%)
+    themeAudioRef.current = themeAudio;
+
+    // Try to play audio (may be blocked by browser autoplay policy)
+    const playTheme = async () => {
+      try {
+        await themeAudio.play();
+      } catch {
+        // Autoplay was blocked, will play after user interaction
+        console.log(
+          "Theme audio autoplay blocked, waiting for user interaction",
+        );
+      }
+    };
+
+    playTheme();
+
+    // Cleanup on unmount
+    return () => {
+      if (themeAudioRef.current) {
+        themeAudioRef.current.pause();
+        themeAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Control theme audio based on sound setting
+  useEffect(() => {
+    if (themeAudioRef.current) {
+      if (isSoundOn) {
+        themeAudioRef.current.volume = 0.3;
+        // Try to resume if paused
+        if (themeAudioRef.current.paused) {
+          themeAudioRef.current.play().catch(() => {});
+        }
+      } else {
+        themeAudioRef.current.volume = 0;
+      }
+    }
+  }, [isSoundOn]);
 
   // Fetch Game Data
   useEffect(() => {
@@ -639,16 +766,54 @@ const SpellTheWordGame = () => {
                   hint?: string;
                 },
                 i: number,
-              ) => ({
-                word_index: i,
-                word_image: w.word_image_preview,
-                word_audio: null, // Audio preview not supported yet
-                hint: w.hint || "",
-                letter_count: w.word_text.length,
-                shuffled_letters: w.word_text
+              ) => {
+                // Generate distractor letters for preview mode
+                const wordText = w.word_text.toLowerCase();
+                const alphabet = "abcdefghijklmnopqrstuvwxyz";
+                const wordLetters = new Set(wordText.split(""));
+                const availableLetters = alphabet
                   .split("")
-                  .sort(() => Math.random() - 0.5),
-              }),
+                  .filter((l) => !wordLetters.has(l));
+
+                // Calculate distractor count based on word length
+                let distractorCount = 3;
+                if (wordText.length <= 3) distractorCount = 2;
+                else if (wordText.length <= 5) distractorCount = 3;
+                else if (wordText.length <= 7) distractorCount = 4;
+                else
+                  distractorCount = Math.min(
+                    5,
+                    Math.floor(wordText.length * 0.5),
+                  );
+
+                const distractors: string[] = [];
+                const tempAvailable = [...availableLetters];
+                for (
+                  let j = 0;
+                  j < distractorCount && tempAvailable.length > 0;
+                  j++
+                ) {
+                  const randomIdx = Math.floor(
+                    Math.random() * tempAvailable.length,
+                  );
+                  distractors.push(tempAvailable[randomIdx]);
+                  tempAvailable.splice(randomIdx, 1);
+                }
+
+                const allLetters = [...wordText.split(""), ...distractors];
+                const shuffledLetters = allLetters.sort(
+                  () => Math.random() - 0.5,
+                );
+
+                return {
+                  word_index: i,
+                  word_image: w.word_image_preview,
+                  word_audio: null,
+                  hint: w.hint || "",
+                  letter_count: w.word_text.length,
+                  shuffled_letters: shuffledLetters,
+                };
+              },
             );
 
             // Store correct words for validation
@@ -735,7 +900,31 @@ const SpellTheWordGame = () => {
       ) {
         letters = currentWord.shuffled_letters;
       } else if (demoCorrectWords.length > 0) {
-        letters = shuffleArray(demoCorrectWords[wordIndex].split(""));
+        // Generate distractor letters for demo mode
+        const wordText = demoCorrectWords[wordIndex].toLowerCase();
+        const alphabet = "abcdefghijklmnopqrstuvwxyz";
+        const wordLettersSet = new Set(wordText.split(""));
+        const availableLetters = alphabet
+          .split("")
+          .filter((l) => !wordLettersSet.has(l));
+
+        // Calculate distractor count based on word length
+        let distractorCount = 3;
+        if (wordText.length <= 3) distractorCount = 2;
+        else if (wordText.length <= 5) distractorCount = 3;
+        else if (wordText.length <= 7) distractorCount = 4;
+        else distractorCount = Math.min(5, Math.floor(wordText.length * 0.5));
+
+        const distractors: string[] = [];
+        const tempAvailable = [...availableLetters];
+        for (let j = 0; j < distractorCount && tempAvailable.length > 0; j++) {
+          const randomIdx = Math.floor(Math.random() * tempAvailable.length);
+          distractors.push(tempAvailable[randomIdx]);
+          tempAvailable.splice(randomIdx, 1);
+        }
+
+        const allLetters = [...wordText.split(""), ...distractors];
+        letters = shuffleArray(allLetters);
       } else {
         letters = Array(letterCount).fill("?");
       }
@@ -750,6 +939,7 @@ const SpellTheWordGame = () => {
       setIsCorrect(false);
       setIsWrong(false);
       setSelectedSlot(0);
+      setRevealedHintCount(0); // Reset hint reveal for new word
     },
     [gameData, demoCorrectWords],
   );
@@ -760,23 +950,17 @@ const SpellTheWordGame = () => {
     setCurrentWordIndex(0);
     setCorrectAnswers(0);
     setScore(0);
-    setTimer(0);
     setTotalTime(0);
+
+    // Initialize countdown if time limit exists
+    if (gameData?.time_limit) {
+      setTimeLeft(gameData.time_limit);
+    } else {
+      setTimeLeft(null);
+    }
+
     initializeWord(0);
   };
-
-  // Timer effect
-  useEffect(() => {
-    if (gameState === "playing" && !isPaused && !isCorrect && !isWrong) {
-      timerRef.current = setInterval(() => {
-        setTimer((prev) => prev + 1);
-        setTotalTime((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [gameState, isPaused, isCorrect, isWrong]);
 
   // Preload audio when word changes
   useEffect(() => {
@@ -865,8 +1049,14 @@ const SpellTheWordGame = () => {
         const letterIndex = shuffledLetters.findIndex(
           (l, idx) => l.toLowerCase() === key && !usedLetterIndices.has(idx),
         );
-        if (letterIndex !== -1 && selectedSlot < answerSlots.length) {
-          placeLetter(selectedSlot, letterIndex, shuffledLetters[letterIndex]);
+        // Find the first empty slot
+        const firstEmptySlot = answerSlots.findIndex((s) => s.letter === null);
+        if (letterIndex !== -1 && firstEmptySlot !== -1) {
+          placeLetter(
+            firstEmptySlot,
+            letterIndex,
+            shuffledLetters[letterIndex],
+          );
         }
       }
 
@@ -915,8 +1105,12 @@ const SpellTheWordGame = () => {
   // Handle letter tile click
   const handleLetterClick = (index: number) => {
     if (usedLetterIndices.has(index) || isCorrect || isWrong) return;
-    if (selectedSlot < answerSlots.length) {
-      placeLetter(selectedSlot, index, shuffledLetters[index]);
+
+    // Find the first empty slot
+    const firstEmptySlot = answerSlots.findIndex((s) => s.letter === null);
+
+    if (firstEmptySlot !== -1) {
+      placeLetter(firstEmptySlot, index, shuffledLetters[index]);
     }
   };
 
@@ -962,14 +1156,64 @@ const SpellTheWordGame = () => {
     e.preventDefault();
   };
 
+  // State for pool drag over
+  const [isPoolDragOver, setIsPoolDragOver] = useState(false);
+
+  // Handle drop back to pool (return letter from answer slot)
+  const handleDropToPool = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsPoolDragOver(false);
+    const source = e.dataTransfer.getData("source");
+    if (source === "slot") {
+      const slotIndex = parseInt(e.dataTransfer.getData("slotIndex"));
+      if (!isNaN(slotIndex) && answerSlots[slotIndex]?.letter) {
+        removeLetter(slotIndex);
+        playClick();
+      }
+    }
+  };
+
+  const handlePoolDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    // Show drop indicator when dragging over pool
+    if (!isPoolDragOver) setIsPoolDragOver(true);
+  };
+
+  const handlePoolDragLeave = () => {
+    setIsPoolDragOver(false);
+  };
+
+  // Handle hint reveal - reveal one more letter each time
+  const handleRevealHint = () => {
+    if (!gameData) return;
+    const currentWord = gameData.words[currentWordIndex];
+    const hint = currentWord.hint || "";
+    if (revealedHintCount < hint.length) {
+      setRevealedHintCount((prev) => prev + 1);
+      playClick();
+    }
+  };
+
+  // Get the partially revealed hint string
+  const getRevealedHint = () => {
+    if (!gameData) return "";
+    const currentWord = gameData.words[currentWordIndex];
+    const hint = currentWord.hint || "";
+    if (!hint) return "";
+
+    return hint
+      .split("")
+      .map((char, index) => {
+        if (char === " ") return " "; // Keep spaces visible
+        return index < revealedHintCount ? char : "_";
+      })
+      .join("");
+  };
+
   // Handle slot drag start (for returning to pool via failed drop)
-  const handleSlotDragStart = () => {
-    // When drag ends outside valid area, letter returns to pool
-    const handleDragEnd = () => {
-      // If dropped outside, letter stays (browser handles this)
-      document.removeEventListener("dragend", handleDragEnd);
-    };
-    document.addEventListener("dragend", handleDragEnd);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleSlotDragStart = (slotIndex: number) => {
+    // Visual feedback is handled by component state
   };
 
   // Submit answer
@@ -1100,7 +1344,6 @@ const SpellTheWordGame = () => {
       const nextIndex = currentWordIndex + 1;
       setCurrentWordIndex(nextIndex);
       initializeWord(nextIndex);
-      setTimer(0);
     } else {
       finishGame();
     }
@@ -1134,8 +1377,43 @@ const SpellTheWordGame = () => {
     playSuccess();
   };
 
-  // Exit
-  const handleExit = async () => {
+  // Monitor Time Left
+  useEffect(() => {
+    if (timeLeft === 0 && gameState === "playing") {
+      setIsWrong(true);
+      playWrong();
+      const timeout = setTimeout(() => {
+        finishGame();
+      }, 1500);
+      return () => clearTimeout(timeout);
+    }
+  }, [timeLeft, gameState]); // finishGame is accessed from closure. Warning: missing dep finishGame.
+
+  // Main Timer Interval
+  useEffect(() => {
+    if (gameState === "playing" && !isPaused && !isCorrect && !isWrong) {
+      timerRef.current = setInterval(() => {
+        setTotalTime((prev) => prev + 1);
+        setTimeLeft((prev) => {
+          if (prev === null) return null;
+          return Math.max(0, prev - 1);
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [gameState, isPaused, isCorrect, isWrong]);
+
+  // Exit - show confirmation first
+  const handleExit = () => {
+    setShowExitConfirm(true);
+  };
+
+  // Confirm exit - actually perform the exit
+  const confirmExit = async () => {
+    setShowExitConfirm(false);
+
     // If this is preview mode, just close the window
     if (id === "preview") {
       window.close();
@@ -1151,6 +1429,11 @@ const SpellTheWordGame = () => {
     navigate("/");
   };
 
+  // Cancel exit
+  const cancelExit = () => {
+    setShowExitConfirm(false);
+  };
+
   // Play again
   const handlePlayAgain = () => {
     setGameState("intro");
@@ -1158,7 +1441,6 @@ const SpellTheWordGame = () => {
     setCurrentWordIndex(0);
     setCorrectAnswers(0);
     setScore(0);
-    setTimer(0);
     setTotalTime(0);
   };
 
@@ -1194,11 +1476,6 @@ const SpellTheWordGame = () => {
   }, [gameState, result, id]);
 
   // Format time
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
 
   // Loading state
   if (isLoading) {
@@ -1262,7 +1539,13 @@ const SpellTheWordGame = () => {
           gameName={gameData.name}
           gameDescription={gameData.description}
           onStart={handleStart}
-          onEnableAudio={() => setIsSoundOn(true)}
+          onEnableAudio={() => {
+            setIsSoundOn(true);
+            // Also try to play theme audio after user interaction
+            if (themeAudioRef.current) {
+              themeAudioRef.current.play().catch(() => {});
+            }
+          }}
           onBack={handleExit}
           isPreview={id === "preview"}
         />
@@ -1271,6 +1554,35 @@ const SpellTheWordGame = () => {
       {/* Pause Overlay */}
       {isPaused && gameState === "playing" && (
         <PauseOverlay onResume={() => setIsPaused(false)} />
+      )}
+
+      {/* Exit Confirmation Dialog */}
+      {showExitConfirm && (
+        <div className="absolute inset-0 z-[300] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white/20 backdrop-blur-md rounded-3xl p-8 mx-4 text-center max-w-sm w-full border border-white/30 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="text-5xl mb-4">🚪</div>
+            <h3 className="text-2xl font-bold text-white mb-2 drop-shadow">
+              Exit Game?
+            </h3>
+            <p className="text-white/80 mb-6">
+              Are you sure you want to exit? Your current progress will be lost.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={cancelExit}
+                className="flex-1 py-3 bg-slate-600/80 hover:bg-slate-500 text-white font-bold rounded-xl transition-all hover:scale-105"
+              >
+                ✕ No, Stay
+              </button>
+              <button
+                onClick={confirmExit}
+                className="flex-1 py-3 bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-lg border-b-4 border-red-700"
+              >
+                ✓ Yes, Exit
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Result Screen */}
@@ -1288,65 +1600,117 @@ const SpellTheWordGame = () => {
       {gameState === "playing" && (
         <div className="flex flex-col h-screen">
           {/* Header */}
-          <header className="bg-black/20 backdrop-blur-sm px-4 py-3 flex items-center justify-between">
-            <button
-              onClick={handleExit}
-              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          <header className="bg-black/20 backdrop-blur-sm px-4 py-3 grid grid-cols-3 items-center relative z-[50]">
+            <div className="justify-self-start">
+              <button
+                onClick={handleExit}
+                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors border border-white/10"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                />
-              </svg>
-              <span className="hidden sm:inline font-medium">Exit</span>
-            </button>
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
+                <span className="hidden sm:inline font-medium">Exit</span>
+              </button>
+            </div>
 
-            <div className="flex items-center gap-3 text-white">
+            <div className="justify-self-center flex flex-col items-center">
               {id === "preview" && (
-                <span className="px-3 py-1 bg-purple-500/80 text-white text-xs font-bold rounded-full">
-                  PREVIEW MODE
+                <span className="px-3 py-0.5 bg-purple-500/80 text-white text-[10px] font-bold rounded-full mb-1 tracking-wider border border-white/20">
+                  PREVIEW
                 </span>
               )}
-              <span className="font-bold text-lg">
+              <span className="font-bold text-xl text-white drop-shadow-md tracking-wide">
                 {currentWordIndex + 1} of {gameData.words.length}
               </span>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="text-white flex items-center gap-1">
-                <span className="text-green-300">✓</span>
+            <div className="justify-self-end flex items-center gap-2">
+              <div className="text-white flex items-center gap-1.5 px-3 py-1.5 bg-black/20 rounded-lg border border-white/10 mr-1">
+                <span className="text-green-400 font-bold">✓</span>
                 <span className="font-bold">{correctAnswers}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Hint Button */}
+              {currentWord.hint && (
                 <button
-                  onClick={() => setIsPaused(true)}
-                  className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+                  onClick={handleRevealHint}
+                  disabled={
+                    revealedHintCount >= (currentWord.hint?.length || 0) ||
+                    isCorrect ||
+                    isWrong
+                  }
+                  className={`
+                    px-3 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5
+                    ${
+                      revealedHintCount >= (currentWord.hint?.length || 0)
+                        ? "bg-green-500/30 text-green-200 cursor-not-allowed border border-green-500/20"
+                        : "bg-amber-500 hover:bg-amber-400 text-white hover:scale-105 shadow-lg border-b-2 border-amber-600"
+                    }
+                  `}
                 >
-                  ⏸️
+                  <span>💡</span>
+                  <span className="hidden sm:inline">Hint</span>
+                  {currentWord.hint && (
+                    <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded text-white/90">
+                      {revealedHintCount}/{currentWord.hint.length}
+                    </span>
+                  )}
                 </button>
-                <button
-                  onClick={() => setIsSoundOn(!isSoundOn)}
-                  className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
-                >
-                  {isSoundOn ? "🔊" : "🔇"}
-                </button>
-              </div>
+              )}
+              <button
+                onClick={() => setIsPaused(true)}
+                className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors border border-white/10"
+              >
+                ⏸️
+              </button>
+              <button
+                onClick={() => setIsSoundOn(!isSoundOn)}
+                className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors border border-white/10"
+              >
+                {isSoundOn ? "🔊" : "🔇"}
+              </button>
             </div>
           </header>
 
           {/* Main Game Area */}
-          <main className="flex-1 flex flex-col items-center justify-center px-4 py-6 gap-6">
+          <main className="flex-1 flex flex-col items-center justify-center px-4 py-6 gap-6 relative">
+            {/* Countdown Timer - Displayed above image */}
+            {timeLeft !== null && (
+              <div
+                className={`
+                flex items-center gap-2 px-6 py-2 rounded-full font-bold text-lg shadow-xl border-2 mb-[-10px] z-10 transition-all duration-300
+                ${
+                  timeLeft <= 10
+                    ? "bg-red-500 text-white border-red-300 animate-pulse scale-110"
+                    : "bg-white/20 backdrop-blur-md text-white border-white/30"
+                }
+              `}
+              >
+                <span className="text-xl">⏳</span>
+                <span className="tabular-nums tracking-widest">
+                  {Math.floor(timeLeft / 60)}:
+                  {(timeLeft % 60).toString().padStart(2, "0")}
+                </span>
+                {timeLeft <= 10 && (
+                  <span className="text-xs uppercase ml-1 font-extrabold animate-bounce">
+                    Hurry!
+                  </span>
+                )}
+              </div>
+            )}
+
             {/* Image with Audio Button */}
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-4 relative">
               <div className="w-64 h-48 sm:w-80 sm:h-60 md:w-96 md:h-72 rounded-xl overflow-hidden bg-white shadow-2xl border-4 border-white">
                 {currentWord.word_image ? (
                   <img
@@ -1391,10 +1755,51 @@ const SpellTheWordGame = () => {
               )}
             </div>
 
-            {/* Hint */}
+            {/* Hint - Progressive Reveal */}
             {currentWord.hint && (
-              <div className="text-white/90 text-lg text-center">
-                <span className="text-cyan-200">Hint:</span> {currentWord.hint}
+              <div className="text-white/90 text-lg text-center flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-cyan-200">Hint:</span>
+                  <span className="font-mono tracking-wider">
+                    {getRevealedHint()
+                      .split("")
+                      .map((char, index) => (
+                        <span
+                          key={index}
+                          className={`
+                          inline-block transition-all duration-300
+                          ${
+                            char === "_"
+                              ? "text-slate-400/60 mx-0.5"
+                              : "text-white font-bold animate-pulse-once"
+                          }
+                        `}
+                          style={{
+                            animationDelay: `${index * 50}ms`,
+                          }}
+                        >
+                          {char}
+                        </span>
+                      ))}
+                  </span>
+                </div>
+                {revealedHintCount === 0 && (
+                  <span className="text-xs text-cyan-300/60">
+                    Press the 💡 Hint button to reveal letters
+                  </span>
+                )}
+                {revealedHintCount > 0 &&
+                  revealedHintCount < (currentWord.hint?.length || 0) && (
+                    <span className="text-xs text-amber-300/80">
+                      {(currentWord.hint?.length || 0) - revealedHintCount}{" "}
+                      letters remaining
+                    </span>
+                  )}
+                {revealedHintCount >= (currentWord.hint?.length || 0) && (
+                  <span className="text-xs text-green-300">
+                    ✓ Fully revealed!
+                  </span>
+                )}
               </div>
             )}
 
@@ -1428,8 +1833,21 @@ const SpellTheWordGame = () => {
               </div>
             )}
 
-            {/* Letter Tiles */}
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-lg">
+            {/* Letter Tiles Pool - Drop zone to return letters */}
+            <div
+              className={`
+                relative flex flex-wrap justify-center gap-2 sm:gap-3 max-w-lg p-4 rounded-2xl
+                transition-all duration-300 ease-out min-h-[80px]
+                ${
+                  isPoolDragOver
+                    ? "bg-cyan-500/20 ring-2 ring-cyan-400 ring-opacity-50 scale-[1.02] shadow-lg"
+                    : "bg-transparent"
+                }
+              `}
+              onDrop={handleDropToPool}
+              onDragOver={handlePoolDragOver}
+              onDragLeave={handlePoolDragLeave}
+            >
               {shuffledLetters.map((letter, index) => (
                 <LetterTile
                   key={index}
@@ -1440,6 +1858,13 @@ const SpellTheWordGame = () => {
                   onDragStart={() => {}}
                 />
               ))}
+              {isPoolDragOver && (
+                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none animate-pulse">
+                  <span className="text-cyan-300 text-sm font-medium bg-slate-900/70 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                    <span>⬇️</span> Drop here to return letter
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Submit & Skip */}
@@ -1464,10 +1889,6 @@ const SpellTheWordGame = () => {
               >
                 Skip →
               </button>
-            </div>
-
-            <div className="text-white/60 font-mono text-sm">
-              Time: {formatTime(timer)}
             </div>
           </main>
         </div>

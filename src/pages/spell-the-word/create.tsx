@@ -240,6 +240,7 @@ const CreateSpellTheWord = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [formData, setFormData] = useState<GameFormData>({
     name: "",
     description: "",
@@ -636,7 +637,7 @@ const CreateSpellTheWord = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => setShowExitConfirm(true)}
               className="gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -844,6 +845,47 @@ const CreateSpellTheWord = () => {
           </Button>
         </section>
       </main>
+      {/* Exit Confirmation Dialog */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <h3 className="text-xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                <span className="text-amber-500">⚠️</span> Unsaved Changes
+              </h3>
+              <p className="text-slate-600">
+                You are about to leave this page. Do you want to save your
+                progress as a draft?
+              </p>
+            </div>
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100">
+              <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                Discard & Leave
+              </Button>
+              <div className="flex-1"></div>
+              <Button
+                variant="outline"
+                onClick={() => setShowExitConfirm(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowExitConfirm(false);
+                  handleSubmit(false);
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                Save as Draft
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
