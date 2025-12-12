@@ -16,6 +16,9 @@ import ProtectedRoute from "./routes/ProtectedRoutes";
 import CreateAnagram from "./pages/Anagram/CreateAnagram";
 import PlayAnagram from "./pages/Anagram/PlayAnagram";
 import EditAnagram from "./pages/Anagram/EditAnagram";
+import MazeChase from "./pages/maze-chase/MazeChase";
+import CreateMazeChase from "./pages/maze-chase/CreateMazeChase";
+import EditMazeChase from "./pages/maze-chase/EditMazeChase";
 
 import PairOrNoPairGame from "./pages/pair-or-no-pair";
 import CreatePairOrNoPair from "./pages/pair-or-no-pair/create";
@@ -33,6 +36,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/sandbox" element={<Sandbox />} />
         <Route path="/quiz/play/:id" element={<Quiz />} />
+        <Route path="/maze-chase/play/:id" element={<MazeChase />} />
         <Route path="/speed-sorting/play/:id" element={<SpeedSorting />} />
         <Route path="/anagram/play/:id" element={<PlayAnagram />} />
         <Route
@@ -57,12 +61,14 @@ function App() {
             path="/create-pair-or-no-pair"
             element={<CreatePairOrNoPair />}
           />
+          <Route path="/create-maze-chase" element={<CreateMazeChase />} />
+          <Route path="/create-anagram" element={<CreateAnagram />} />
           <Route path="/quiz/edit/:id" element={<EditQuiz />} />
           <Route
             path="/speed-sorting/edit/:id"
             element={<EditSpeedSorting />}
           />
-          <Route path="/create-anagram" element={<CreateAnagram />} />
+          <Route path="/maze-chase/edit/:id" element={<EditMazeChase />} />
           <Route path="/anagram/edit/:id" element={<EditAnagram />} />
           <Route
             path="/create-sliding-puzzle"

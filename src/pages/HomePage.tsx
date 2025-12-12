@@ -93,8 +93,8 @@ export default function HomePage() {
       try {
         const response = await api.get("/api/game/template");
         setGameTemplates(response.data.data);
-      } catch (err) {
-        console.error("Failed to fetch game templates:", err);
+      } catch {
+        // Silently fail template fetch
       }
     };
     fetchGameTemplates();
@@ -120,7 +120,6 @@ export default function HomePage() {
         const url = queryString ? `/api/game?${queryString}` : "/api/game";
 
         const response = await api.get(url);
-        console.log("Fetched games data:", response.data);
 
         setGames(
           response.data.data.map(
@@ -141,9 +140,9 @@ export default function HomePage() {
               }) as Game,
           ),
         );
-      } catch (err) {
+      } catch {
         setError("Failed to fetch games. Please try again later.");
-        console.error("Fetch error:", err);
+        setGames([]);
       } finally {
         if (initialLoading) {
           setInitialLoading(false);
@@ -189,9 +188,7 @@ export default function HomePage() {
         game_id: gameId,
         is_like: newIsLiked,
       });
-    } catch (err) {
-      console.error("Failed to like game:", err);
-
+    } catch {
       setGames((prev) =>
         prev.map((game) => {
           if (game.id === gameId) {
