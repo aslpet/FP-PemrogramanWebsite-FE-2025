@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "@/api/axios";
+import { useAuthStore } from "@/store/useAuthStore";
+import {
+  getLeaderboard,
+  submitScore,
+  type LeaderboardEntry,
+} from "@/api/quiz/leaderboard";
 
 // --- TYPE DEFINITIONS ---
 interface WordItem {
@@ -62,11 +68,9 @@ const useSoundEffects = (isSoundOn: boolean) => {
 
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
-      const AudioContextClass =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      audioContextRef.current = new AudioContextClass();
+      audioContextRef.current = new (window.AudioContext ||
+        (window as Window & { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext)();
     }
     return audioContextRef.current;
   }, []);
@@ -265,11 +269,15 @@ const IntroScreen = ({
   gameDescription,
   onStart,
   onEnableAudio,
+  onBack,
+  isPreview = false,
 }: {
   gameName: string;
   gameDescription: string;
   onStart: () => void;
   onEnableAudio?: () => void;
+  onBack?: () => void;
+  isPreview?: boolean;
 }) => {
   return (
     <div
@@ -280,6 +288,32 @@ const IntroScreen = ({
           "linear-gradient(180deg, #87CEEB 0%, #1E90FF 50%, #006994 100%)",
       }}
     >
+      {/* Back Button */}
+      {onBack && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onBack();
+          }}
+          className="absolute top-4 left-4 z-20 flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors backdrop-blur-sm pointer-events-auto"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          <span className="font-medium">Back</span>
+        </button>
+      )}
+
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {[...Array(15)].map((_, i) => (
           <div
@@ -298,6 +332,13 @@ const IntroScreen = ({
       </div>
 
       <div className="z-10 text-center px-4 max-w-2xl">
+        {isPreview && (
+          <div className="mb-4">
+            <span className="inline-block px-4 py-2 bg-purple-500 text-white text-sm font-bold rounded-full shadow-lg">
+              🔍 PREVIEW MODE - This is a preview of your game
+            </span>
+          </div>
+        )}
         <h1 className="text-5xl sm:text-7xl font-black text-white mb-4 tracking-tight drop-shadow-2xl">
           🔤 Spell the Word
         </h1>
@@ -312,7 +353,7 @@ const IntroScreen = ({
             e.stopPropagation();
             onStart();
           }}
-          className="group relative flex items-center justify-center px-12 py-4 bg-gradient-to-b from-amber-400 to-amber-600 rounded-2xl hover:scale-110 transition-all duration-300 shadow-xl hover:shadow-2xl mx-auto border-b-4 border-amber-700"
+          className="group relative flex items-center justify-center px-12 py-4 bg-gradient-to-b from-amber-400 to-amber-600 rounded-2xl hover:scale-110 transition-all duration-300 shadow-xl hover:shadow-2xl mx-auto border-b-4 border-amber-700 pointer-events-auto"
         >
           <span className="text-white font-black text-2xl tracking-wider drop-shadow">
             ▶ START GAME
@@ -347,10 +388,14 @@ const ResultScreen = ({
   result,
   onPlayAgain,
   onExit,
+  leaderboard,
+  isLoadingLeaderboard,
 }: {
   result: GameResult;
   onPlayAgain: () => void;
   onExit: () => void;
+  leaderboard: LeaderboardEntry[];
+  isLoadingLeaderboard: boolean;
 }) => {
   const {
     correct_words,
@@ -428,6 +473,78 @@ const ResultScreen = ({
             </span>
           ))}
         </div>
+
+        {/* Leaderboard Section */}
+        <div className="mt-6 w-full max-w-md">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <h3 className="text-center text-xl font-bold text-yellow-300 mb-4">
+              🏆 Leaderboard
+            </h3>
+            {isLoadingLeaderboard ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+                <span className="ml-3 text-white/80">Loading...</span>
+              </div>
+            ) : leaderboard.length > 0 ? (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {leaderboard.slice(0, 10).map((entry, index) => {
+                  const rank = index + 1;
+                  const getMedalEmoji = (rank: number) => {
+                    if (rank === 1) return "🥇";
+                    if (rank === 2) return "🥈";
+                    if (rank === 3) return "🥉";
+                    return `${rank}.`;
+                  };
+
+                  return (
+                    <div
+                      key={entry.id}
+                      className="flex items-center justify-between px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-bold w-8">
+                          {getMedalEmoji(rank)}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {entry.user?.profile_picture ? (
+                            <img
+                              src={entry.user.profile_picture}
+                              alt={entry.player_name}
+                              className="w-8 h-8 rounded-full object-cover border-2 border-white/30"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm border-2 border-white/30">
+                              {entry.player_name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="text-white font-medium">
+                            {entry.player_name}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-green-400 font-bold">
+                          {entry.score}/{entry.max_score}
+                        </div>
+                        <div className="text-white/60 text-xs">
+                          {entry.accuracy.toFixed(0)}% •{" "}
+                          {Math.floor(entry.time_taken / 60)}:
+                          {(entry.time_taken % 60).toString().padStart(2, "0")}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-white/60">
+                <p className="text-sm">No scores yet!</p>
+                <p className="text-xs mt-2">Be the first to play!</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="flex flex-col gap-3 mt-6">
           <button
             onClick={onPlayAgain}
@@ -485,6 +602,10 @@ const SpellTheWordGame = () => {
   const [score, setScore] = useState(0);
   const [result, setResult] = useState<GameResult | null>(null);
 
+  // Leaderboard State
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+
   // Settings
   const [isSoundOn, setIsSoundOn] = useState(true);
   const { playCorrect, playWrong, playClick, playSuccess, playLetterPlace } =
@@ -493,13 +614,65 @@ const SpellTheWordGame = () => {
   // Refs
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch Game Data
   useEffect(() => {
     const fetchGame = async () => {
       try {
         setIsLoading(true);
+
+        // Check if this is a preview mode
+        if (id === "preview") {
+          const previewData = sessionStorage.getItem("spell-word-preview");
+          if (previewData) {
+            const preview = JSON.parse(previewData);
+
+            // Transform preview data to game format
+            const words = preview.words.map(
+              (
+                w: {
+                  word_text: string;
+                  word_image_preview: string;
+                  hint?: string;
+                },
+                i: number,
+              ) => ({
+                word_index: i,
+                word_image: w.word_image_preview,
+                word_audio: null, // Audio preview not supported yet
+                hint: w.hint || "",
+                letter_count: w.word_text.length,
+                shuffled_letters: w.word_text
+                  .split("")
+                  .sort(() => Math.random() - 0.5),
+              }),
+            );
+
+            // Store correct words for validation
+            setDemoCorrectWords(
+              preview.words.map((w: { word_text: string }) =>
+                w.word_text.toLowerCase(),
+              ),
+            );
+
+            setGameData({
+              id: "preview",
+              name: preview.name,
+              description: preview.description,
+              thumbnail_image: null,
+              is_published: false,
+              words: words,
+              time_limit: preview.time_limit,
+              score_per_word: preview.score_per_word,
+            });
+          } else {
+            setError("No preview data found");
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // Normal game fetch
         const response = await api.get(
           `/api/game/game-type/spell-the-word/${id}/play/public`,
         );
@@ -601,27 +774,6 @@ const SpellTheWordGame = () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [gameState, isPaused, isCorrect, isWrong]);
-
-  // Preload audio when word changes
-  useEffect(() => {
-    if (
-      gameState === "playing" &&
-      gameData &&
-      gameData.words[currentWordIndex]
-    ) {
-      const currentWord = gameData.words[currentWordIndex];
-      if (currentWord.word_audio) {
-        const audioUrl = currentWord.word_audio.startsWith("http")
-          ? currentWord.word_audio
-          : `${import.meta.env.VITE_API_URL}/${currentWord.word_audio}`;
-        const audio = new Audio(audioUrl);
-        audio.preload = "auto";
-        audioRef.current = audio;
-      } else {
-        audioRef.current = null;
-      }
-    }
-  }, [gameState, gameData, currentWordIndex]);
 
   // Place letter in slot
   const placeLetter = useCallback(
@@ -815,9 +967,37 @@ const SpellTheWordGame = () => {
       if (userAnswer === correctWord) {
         setIsCorrect(true);
         playCorrect();
-        setCorrectAnswers((prev) => prev + 1);
-        setScore((prev) => prev + (gameData.score_per_word || 100));
-        setTimeout(() => moveToNextWord(), 1200);
+
+        // Update scores with new values
+        const newCorrectAnswers = correctAnswers + 1;
+        const newScore = score + (gameData.score_per_word || 100);
+        setCorrectAnswers(newCorrectAnswers);
+        setScore(newScore);
+
+        // If this is the last word, finish game after animation
+        if (currentWordIndex === gameData.words.length - 1) {
+          setTimeout(() => {
+            const totalWords = gameData.words.length;
+            const maxScore = totalWords * (gameData.score_per_word || 100);
+            const percentage = Math.round(
+              (newCorrectAnswers / totalWords) * 100,
+            );
+
+            setResult({
+              correct_words: newCorrectAnswers,
+              total_words: totalWords,
+              max_score: maxScore,
+              score: newScore,
+              percentage: percentage,
+              time_taken: totalTime,
+            });
+
+            setGameState("finished");
+            playSuccess();
+          }, 1200);
+        } else {
+          setTimeout(() => moveToNextWord(), 1200);
+        }
       } else {
         setIsWrong(true);
         setLastCorrectAnswer(correctWord);
@@ -840,9 +1020,37 @@ const SpellTheWordGame = () => {
       if (result.is_correct) {
         setIsCorrect(true);
         playCorrect();
-        setCorrectAnswers((prev) => prev + 1);
-        setScore((prev) => prev + (gameData.score_per_word || 100));
-        setTimeout(() => moveToNextWord(), 1200);
+
+        // Update scores with new values
+        const newCorrectAnswers = correctAnswers + 1;
+        const newScore = score + (gameData.score_per_word || 100);
+        setCorrectAnswers(newCorrectAnswers);
+        setScore(newScore);
+
+        // If this is the last word, finish game after animation
+        if (currentWordIndex === gameData.words.length - 1) {
+          setTimeout(() => {
+            const totalWords = gameData.words.length;
+            const maxScore = totalWords * (gameData.score_per_word || 100);
+            const percentage = Math.round(
+              (newCorrectAnswers / totalWords) * 100,
+            );
+
+            setResult({
+              correct_words: newCorrectAnswers,
+              total_words: totalWords,
+              max_score: maxScore,
+              score: newScore,
+              percentage: percentage,
+              time_taken: totalTime,
+            });
+
+            setGameState("finished");
+            playSuccess();
+          }, 1200);
+        } else {
+          setTimeout(() => moveToNextWord(), 1200);
+        }
       } else {
         setIsWrong(true);
         setLastCorrectAnswer(result.correct_answer);
@@ -884,16 +1092,14 @@ const SpellTheWordGame = () => {
     if (!gameData) return;
 
     const totalWords = gameData.words.length;
-    const finalCorrect = correctAnswers + (isCorrect ? 1 : 0);
     const maxScore = totalWords * (gameData.score_per_word || 100);
-    const finalScore = score + (isCorrect ? gameData.score_per_word || 100 : 0);
-    const percentage = Math.round((finalCorrect / totalWords) * 100);
+    const percentage = Math.round((correctAnswers / totalWords) * 100);
 
     setResult({
-      correct_words: finalCorrect,
+      correct_words: correctAnswers,
       total_words: totalWords,
       max_score: maxScore,
-      score: finalScore,
+      score: score,
       percentage: percentage,
       time_taken: totalTime,
     });
@@ -904,6 +1110,13 @@ const SpellTheWordGame = () => {
 
   // Exit
   const handleExit = async () => {
+    // If this is preview mode, just close the window
+    if (id === "preview") {
+      window.close();
+      return;
+    }
+
+    // For normal game, update play count and navigate to home
     try {
       await api.post("/api/game/play-count", { game_id: id });
     } catch (err) {
@@ -922,6 +1135,37 @@ const SpellTheWordGame = () => {
     setTimer(0);
     setTotalTime(0);
   };
+
+  // Auto-submit score when game finishes
+  useEffect(() => {
+    const autoSubmitScore = async () => {
+      if (gameState === "finished" && result && id && id !== "preview") {
+        setIsLoadingLeaderboard(true);
+        try {
+          const { user } = useAuthStore.getState();
+          const playerName = user?.username || "Anonymous";
+
+          await submitScore(id, {
+            player_name: playerName,
+            score: result.score,
+            max_score: result.max_score,
+            time_taken: result.time_taken,
+            accuracy: result.percentage,
+          });
+
+          // Auto-refresh leaderboard
+          const data = await getLeaderboard(id);
+          setLeaderboard(data);
+        } catch (error) {
+          console.error("Failed to auto-submit score:", error);
+        } finally {
+          setIsLoadingLeaderboard(false);
+        }
+      }
+    };
+
+    autoSubmitScore();
+  }, [gameState, result, id]);
 
   // Format time
   const formatTime = (seconds: number) => {
@@ -993,6 +1237,8 @@ const SpellTheWordGame = () => {
           gameDescription={gameData.description}
           onStart={handleStart}
           onEnableAudio={() => setIsSoundOn(true)}
+          onBack={handleExit}
+          isPreview={id === "preview"}
         />
       )}
 
@@ -1007,6 +1253,8 @@ const SpellTheWordGame = () => {
           result={result}
           onPlayAgain={handlePlayAgain}
           onExit={handleExit}
+          leaderboard={leaderboard}
+          isLoadingLeaderboard={isLoadingLeaderboard}
         />
       )}
 
@@ -1036,6 +1284,11 @@ const SpellTheWordGame = () => {
             </button>
 
             <div className="flex items-center gap-3 text-white">
+              {id === "preview" && (
+                <span className="px-3 py-1 bg-purple-500/80 text-white text-xs font-bold rounded-full">
+                  PREVIEW MODE
+                </span>
+              )}
               <span className="font-bold text-lg">
                 {currentWordIndex + 1} of {gameData.words.length}
               </span>
