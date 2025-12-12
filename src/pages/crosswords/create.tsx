@@ -57,12 +57,13 @@ export default function CreateCrossword() {
     if (validRawItems.length < 5)
       return toast.error("Please provide at least 5 valid words and clues");
 
+    // ALIGNMENT BACKEND: Generate Struktur Grid Manual (Dummy Layout)
     const formattedWords = validRawItems.map((item, index) => ({
-      number: index + 1,
-      direction: "horizontal",
-      row_index: index * 2,
-      col_index: 0,
-      answer: item.word.toUpperCase(),
+      number: index + 1, // Nomor soal (Required BE)
+      direction: "horizontal", // Arah (Required BE)
+      row_index: index * 2, // Baris (Kasih jarak 2 baris biar ga tabrakan)
+      col_index: 0, // Kolom (Rata kiri)
+      answer: item.word.toUpperCase(), // Nama field wajib 'answer'
       clue: item.clue,
     }));
 
@@ -71,8 +72,11 @@ export default function CreateCrossword() {
     formData.append("description", description);
     formData.append("thumbnail_image", thumbnail);
     formData.append("is_publish_immediately", publish ? "true" : "false");
+
+    // Kirim data words dalam bentuk string JSON
     formData.append("words", JSON.stringify(formattedWords));
 
+    // Kirim ukuran grid (rows & cols) yang cukup muat
     const minRows = formattedWords.length * 2 + 5;
     formData.append("rows", String(minRows > 20 ? minRows : 20));
     formData.append("cols", "20");
@@ -84,8 +88,8 @@ export default function CreateCrossword() {
       toast.success("Crossword created successfully!");
       navigate("/my-projects");
     } catch (err: unknown) {
-      // FIX: Ganti 'any' dengan 'unknown' dan casting di dalam
       console.error(err);
+      // Type casting error agar aman dari linter
       const errorObj = err as { response?: { data?: { message?: string } } };
       const msg = errorObj?.response?.data?.message || "Failed to create game";
       toast.error(msg);

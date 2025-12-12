@@ -45,16 +45,15 @@ export default function EditCrossword() {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [isPublish, setIsPublish] = useState(false);
 
-  // Default kosong, karena kita tidak bisa load jawaban lama dari backend
+  // Items kita kosongkan karena Backend tidak mengembalikan data 'answer'
   const [items, setItems] = useState<CrosswordItem[]>([]);
-  // State untuk menandai apakah user ingin mereset/mengganti semua kata
+  // Mode edit words hanya aktif jika user memilih untuk overwrite
   const [isEditingWords, setIsEditingWords] = useState(false);
 
-  // Fetch Existing Data
   useEffect(() => {
     const fetchGame = async () => {
       try {
-        // [FIX] Gunakan endpoint play/private karena endpoint detail biasa tidak ada
+        // ALIGNMENT BACKEND: Gunakan /play/private karena endpoint detail tidak ada
         const response = await api.get(
           `/api/game/game-type/crossword/${id}/play/private`,
         );
@@ -70,8 +69,7 @@ export default function EditCrossword() {
           );
         }
 
-        // Note: data.words ada, tapi tidak punya field 'answer' (disembunyikan backend),
-        // jadi kita tidak load ke form items agar tidak error/kosong.
+        // Kita TIDAK me-load words ke state 'items' karena field 'answer' tidak ada.
       } catch (error) {
         console.error("Failed to fetch game:", error);
         toast.error("Failed to load game data.");
@@ -86,7 +84,6 @@ export default function EditCrossword() {
 
   const handleStartEditingWords = () => {
     setIsEditingWords(true);
-    // Siapkan 5 slot kosong untuk mulai ulang
     setItems([
       { word: "", clue: "" },
       { word: "", clue: "" },
@@ -124,7 +121,6 @@ export default function EditCrossword() {
     if (!thumbnail && !thumbnailPreview)
       return toast.error("Thumbnail is required");
 
-    // Validasi words HANYA JIKA user memutuskan mengedit words
     let validWords: { word: string; clue: string }[] = [];
     if (isEditingWords) {
       validWords = items.filter(
@@ -140,14 +136,14 @@ export default function EditCrossword() {
       const formData = new FormData();
       formData.append("name", title);
       formData.append("description", description);
+      // ALIGNMENT BACKEND: Field update publish menggunakan 'is_publish' (string)
       formData.append("is_publish", publishStatus ? "true" : "false");
 
       if (thumbnail) {
         formData.append("thumbnail_image", thumbnail);
       }
 
-      // [LOGIKA UPDATE PARTIAL]
-      // Hanya kirim words jika user mengeditnya. Jika tidak, backend akan pakai grid lama.
+      // Hanya kirim update Grid jika user memilih edit words
       if (isEditingWords) {
         const formattedWords = validWords.map((item, index) => ({
           number: index + 1,
@@ -172,9 +168,11 @@ export default function EditCrossword() {
         `Crossword ${publishStatus ? "published" : "saved"} successfully!`,
       );
       navigate("/my-projects");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error("Failed to update game");
+      const errorObj = err as { response?: { data?: { message?: string } } };
+      const msg = errorObj?.response?.data?.message || "Failed to update game";
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
