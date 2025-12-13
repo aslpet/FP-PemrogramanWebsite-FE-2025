@@ -1052,7 +1052,8 @@ function EditMazeChase() {
                   </div>
                   {formErrors[`questions.${qIndex}.correct`] && (
                     <p className="text-red-400 text-sm flex items-center gap-1">
-                      <span>⚠</span> {formErrors[`questions.${qIndex}.correct`]}
+                      <span>⚠</span>{" "}
+                      {formErrors[`questions.${qIndex}.correct`]}
                     </p>
                   )}
                 </div>

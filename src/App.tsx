@@ -27,14 +27,12 @@ import EditPairOrNoPair from "./pages/pair-or-no-pair/edit";
 import CreateSlidingPuzzle from "./pages/sliding-puzzle/CreateSlidingPuzzle";
 import EditSlidingPuzzle from "./pages/sliding-puzzle/EditSlidingPuzzle";
 import PlaySlidingPuzzle from "./pages/sliding-puzzle/PlaySlidingPuzzle";
-import CreateFlipTiles from "./pages/CreateFlipTiles";
-import EditFlipTiles from "./pages/EditFlipTiles";
-import FlipTiles from "./pages/FlipTiles";
+import CreateFlipTiles from "./pages/flip-tiles/CreateFlipTiles";
+import EditFlipTiles from "./pages/flip-tiles/EditFlipTiles";
+import FlipTiles from "./pages/flip-tiles/FlipTiles";
 import TypeTheAnswer from "./pages/TypeTheAnswer";
 import CreateTypeTheAnswer from "./pages/CreateTypeTheAnswer";
 import EditTypeTheAnswer from "./pages/EditTypeTheAnswer";
-
-// 📌 TAMBAHAN 2: Import Komponen Game Whack-a-Mole
 import WhackAMoleGame from "./pages/whack-a-mole";
 import CreateWhackAMole from "./pages/whack-a-mole/create";
 import EditWhackAMole from "./pages/whack-a-mole/edit";
