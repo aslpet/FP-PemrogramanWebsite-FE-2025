@@ -173,7 +173,7 @@ const LetterTile = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        relative w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18
+        relative w-21 h-21 sm:w-24 sm:h-24 md:w-27 md:h-27
         select-none
         transition-all duration-300 ease-out
         ${
@@ -195,7 +195,7 @@ const LetterTile = ({
         className="w-full h-full object-contain"
       />
       <span
-        className="absolute inset-0 flex items-center justify-center font-bold text-2xl sm:text-3xl text-amber-900"
+        className="absolute inset-0 flex items-center justify-center font-bold text-4xl sm:text-5xl md:text-6xl text-amber-900"
         style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.3)" }}
       >
         {letter.toUpperCase()}
@@ -282,7 +282,7 @@ const AnswerSlot = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        relative w-12 h-12 sm:w-14 sm:h-14
+        relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32
         flex items-center justify-center
         transition-all duration-300 ease-out
         ${isBeingDragged ? "opacity-30 scale-90" : ""}
@@ -314,14 +314,14 @@ const AnswerSlot = ({
             className={`w-full h-full object-contain ${isCorrect ? "brightness-125 hue-rotate-90" : isWrong ? "brightness-75 hue-rotate-180" : ""}`}
           />
           <span
-            className="absolute inset-0 flex items-center justify-center font-bold text-xl sm:text-2xl text-amber-900"
+            className="absolute inset-0 flex items-center justify-center font-bold text-3xl sm:text-4xl md:text-5xl text-amber-900"
             style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.3)" }}
           >
             {letter.toUpperCase()}
           </span>
         </>
       ) : (
-        <span className="text-slate-500/70 text-lg font-bold">_</span>
+        <span className="text-slate-500/70 text-2xl font-bold">_</span>
       )}
     </div>
   );
@@ -1755,7 +1755,7 @@ const SpellTheWordGame = () => {
           <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
           {/* Header Bar */}
-          <header className="relative z-[50] px-4 py-4 flex items-center justify-between bg-gradient-to-b from-black/50 to-transparent">
+          <header className="relative z-[50] px-4 py-4 flex items-center justify-between bg-slate-900/70 backdrop-blur-sm">
             {/* Left - Back Button */}
             <button
               onClick={() => {
@@ -1772,8 +1772,8 @@ const SpellTheWordGame = () => {
               />
             </button>
 
-            {/* Center - Word Progress */}
-            <div className="flex flex-col items-center">
+            {/* Center - Word Progress (Absolute centered) */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none">
               {id === "preview" && (
                 <span className="px-3 py-0.5 bg-purple-500/80 text-white text-[10px] font-bold rounded-full mb-1 tracking-wider">
                   PREVIEW
@@ -1890,38 +1890,42 @@ const SpellTheWordGame = () => {
             )}
 
             {/* Image Section with Hint Box and Hint Button */}
-            <div className="flex items-center justify-center gap-6 sm:gap-10 md:gap-14">
-              {/* Hint Box - Left side */}
-              {currentWord.hint && (
-                <div
-                  className="relative flex items-center justify-center"
-                  style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))" }}
-                >
-                  <img
-                    src="/src/pages/spell-the-word/assets/page-2/hint-box.png"
-                    alt="Hint Box"
-                    className="w-44 h-28 sm:w-56 sm:h-36 md:w-64 md:h-40 object-fill"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center px-4">
-                    <div className="text-center">
-                      <span
-                        className="text-yellow-300 text-base sm:text-lg font-bold block mb-1"
-                        style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}
-                      >
-                        HINT :
-                      </span>
-                      <span
-                        className="text-white text-lg sm:text-xl md:text-2xl font-mono tracking-wider font-bold"
-                        style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}
-                      >
-                        {getRevealedHint()}
-                      </span>
+            <div className="relative flex items-center justify-center w-full">
+              {/* Hint Box - Left side (absolute positioned) */}
+              <div className="absolute left-[calc(50%-380px)] sm:left-[calc(50%-400px)] md:left-[calc(50%-450px)] lg:left-[calc(50%-500px)]">
+                {currentWord.hint && (
+                  <div
+                    className="relative flex items-center justify-center"
+                    style={{
+                      filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))",
+                    }}
+                  >
+                    <img
+                      src="/src/pages/spell-the-word/assets/page-2/hint-box.png"
+                      alt="Hint Box"
+                      className="w-44 h-28 sm:w-56 sm:h-36 md:w-64 md:h-40 object-fill"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center px-4">
+                      <div className="text-center">
+                        <span
+                          className="text-yellow-300 text-base sm:text-lg font-bold block mb-1"
+                          style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}
+                        >
+                          HINT :
+                        </span>
+                        <span
+                          className="text-white text-lg sm:text-xl md:text-2xl font-mono tracking-wider font-bold"
+                          style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}
+                        >
+                          {getRevealedHint()}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Quiz Image with Stone Border */}
+              {/* Quiz Image with Stone Border - Center */}
               <div
                 className="relative flex items-center justify-center"
                 style={{ filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.7))" }}
@@ -1976,32 +1980,36 @@ const SpellTheWordGame = () => {
                 </div>
               </div>
 
-              {/* Hint Button - Right side */}
-              {currentWord.hint && (
-                <button
-                  onClick={handleRevealHint}
-                  disabled={
-                    revealedHintCount >= (currentWord.hint?.length || 0) ||
-                    isCorrect ||
-                    isWrong
-                  }
-                  className={`relative transition-all duration-300 ${
-                    revealedHintCount >= (currentWord.hint?.length || 0)
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:scale-110 active:scale-95"
-                  }`}
-                  style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))" }}
-                >
-                  <img
-                    src="/src/pages/spell-the-word/assets/page-2/stone-button.png"
-                    alt="Hint"
-                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl">
-                    💡
-                  </span>
-                </button>
-              )}
+              {/* Hint Button - Right side (absolute positioned) */}
+              <div className="absolute right-[calc(50%-260px)] sm:right-[calc(50%-280px)] md:right-[calc(50%-320px)] lg:right-[calc(50%-360px)]">
+                {currentWord.hint && (
+                  <button
+                    onClick={handleRevealHint}
+                    disabled={
+                      revealedHintCount >= (currentWord.hint?.length || 0) ||
+                      isCorrect ||
+                      isWrong
+                    }
+                    className={`relative transition-all duration-300 ${
+                      revealedHintCount >= (currentWord.hint?.length || 0)
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:scale-110 active:scale-95"
+                    }`}
+                    style={{
+                      filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))",
+                    }}
+                  >
+                    <img
+                      src="/src/pages/spell-the-word/assets/page-2/stone-button.png"
+                      alt="Hint"
+                      className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl">
+                      💡
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Audio Play Button */}
@@ -2085,7 +2093,7 @@ const SpellTheWordGame = () => {
             {/* Letter Tiles Pool */}
             <div
               className={`
-                relative flex flex-wrap justify-center gap-1 sm:gap-1.5 max-w-2xl p-2 rounded-2xl
+                relative grid grid-cols-7 justify-items-center gap-1 sm:gap-1.5 p-2 rounded-2xl
                 transition-all duration-300 ease-out min-h-[60px]
                 ${
                   isPoolDragOver
@@ -2133,7 +2141,7 @@ const SpellTheWordGame = () => {
                 <img
                   src="/src/pages/spell-the-word/assets/page-2/submit-button.png"
                   alt="Submit"
-                  className="w-40 h-12 sm:w-48 sm:h-14"
+                  className="w-60 h-[4.5rem] sm:w-72 sm:h-[5.25rem]"
                 />
               </button>
               <button
