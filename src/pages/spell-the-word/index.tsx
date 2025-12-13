@@ -292,7 +292,7 @@ const AnswerSlot = ({
               ? "bg-slate-700/80 border-2 border-cyan-400 scale-105 rounded-lg"
               : isSelected
                 ? "bg-slate-700/60 border-2 border-cyan-500 rounded-lg"
-                : "bg-slate-800/70 border-2 border-slate-600 rounded-lg"
+                : "bg-slate-700/50 border-2 border-cyan-500/60 rounded-lg"
             : isCorrect
               ? "scale-105"
               : isWrong
@@ -562,7 +562,8 @@ const ResultScreen = ({
               </div>
             ) : (
               <div className="space-y-1.5">
-                {Array.from({ length: 5 }).map((_, index) => {
+                {/* Top 3 - Always visible */}
+                {Array.from({ length: 3 }).map((_, index) => {
                   const rank = index + 1;
                   const entry = leaderboard[index];
                   const getMedalEmoji = (r: number) => {
@@ -629,6 +630,52 @@ const ResultScreen = ({
                     </div>
                   );
                 })}
+
+                {/* Entries 4-5 - Scrollable with hidden scrollbar */}
+                {leaderboard.length > 3 && (
+                  <div
+                    className="max-h-20 overflow-y-auto scrollbar-hide space-y-1.5 mt-1 pt-1 border-t border-slate-300/50"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
+                    {leaderboard.slice(3, 5).map((entry, index) => {
+                      const rank = index + 4;
+                      return (
+                        <div
+                          key={entry.id}
+                          className="flex items-center justify-between px-2 py-1.5 bg-white/70 rounded-lg"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold w-6 text-sm text-slate-600">
+                              {rank}.
+                            </span>
+                            {entry.user?.profile_picture ? (
+                              <img
+                                src={entry.user.profile_picture}
+                                alt={entry.player_name}
+                                className="w-6 h-6 rounded-full object-cover border border-slate-300"
+                              />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs">
+                                {entry.player_name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="text-slate-700 font-medium text-sm truncate max-w-[80px]">
+                              {entry.player_name}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-amber-700 font-bold text-sm">
+                              {entry.score}/{entry.max_score}
+                            </div>
+                            <div className="text-slate-500 text-xs">
+                              {entry.accuracy.toFixed(0)}%
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -690,6 +737,7 @@ const SpellTheWordGame = () => {
   );
   const [isPaused, setIsPaused] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showImagePopup, setShowImagePopup] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
   // Timer per word removed (unused)
@@ -1407,6 +1455,31 @@ const SpellTheWordGame = () => {
     playSuccess();
   };
 
+  // Handle skip - mark as wrong and move to next
+  const handleSkip = async () => {
+    if (!gameData || isCorrect || isWrong) return;
+
+    // Get correct answer for display
+    if (demoCorrectWords.length > 0) {
+      setLastCorrectAnswer(demoCorrectWords[currentWordIndex]);
+    } else {
+      try {
+        const response = await api.post(
+          `/api/game/game-type/spell-the-word/${id}/check`,
+          { answers: [{ word_index: currentWordIndex, user_answer: "" }] },
+        );
+        const result = response.data.data.results[0];
+        setLastCorrectAnswer(result.correct_answer || "");
+      } catch {
+        setLastCorrectAnswer("(tidak tersedia)");
+      }
+    }
+
+    setIsWrong(true);
+    playWrong();
+    setTimeout(() => moveToNextWord(), 1500);
+  };
+
   // Handle timeout - auto-check if slots filled, otherwise get correct answer and move to next
   const handleTimeOut = async () => {
     if (!gameData) return;
@@ -1774,22 +1847,41 @@ const SpellTheWordGame = () => {
             </div>
           </header>
 
-          {/* Main Game Area */}
-          <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 gap-4">
+          {/* Main Game Area - Scrollable with hidden scrollbar */}
+          <main
+            className="relative z-10 flex-1 flex flex-col items-center justify-start px-4 py-2 gap-1 overflow-y-auto scrollbar-hide"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          >
             {/* Timer */}
             {timeLeft !== null && (
               <div
-                className={`relative flex items-center justify-center ${timeLeft <= 10 ? "animate-pulse" : ""}`}
-                style={{ filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.6))" }}
+                className={`relative flex items-center justify-center transition-transform duration-300 ${
+                  timeLeft <= 10 ? "animate-pulse scale-110" : ""
+                }`}
+                style={{
+                  filter:
+                    timeLeft <= 10
+                      ? "drop-shadow(0 0 20px rgba(255,0,0,0.6))"
+                      : "drop-shadow(0 6px 12px rgba(0,0,0,0.6))",
+                }}
               >
                 <img
                   src="/src/pages/spell-the-word/assets/page-2/timer-button.png"
                   alt="Timer"
-                  className="w-36 h-16 sm:w-44 sm:h-20"
+                  className={`w-36 h-16 sm:w-44 sm:h-20 transition-all duration-300 ${
+                    timeLeft <= 10 ? "brightness-110 hue-rotate-[-15deg]" : ""
+                  }`}
                 />
                 <span
-                  className={`absolute font-bold text-xl sm:text-2xl tracking-widest ${timeLeft <= 10 ? "text-red-400" : "text-white"}`}
-                  style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                  className={`absolute font-bold text-xl sm:text-2xl tracking-widest transition-colors duration-300 ${
+                    timeLeft <= 10 ? "text-red-400" : "text-white"
+                  }`}
+                  style={{
+                    textShadow:
+                      timeLeft <= 10
+                        ? "0 0 10px rgba(255,0,0,0.8), 2px 2px 4px rgba(0,0,0,0.9)"
+                        : "2px 2px 4px rgba(0,0,0,0.8)",
+                  }}
                 >
                   {Math.floor(timeLeft / 60)}:
                   {(timeLeft % 60).toString().padStart(2, "0")}
@@ -1813,14 +1905,14 @@ const SpellTheWordGame = () => {
                   <div className="absolute inset-0 flex items-center justify-center px-4">
                     <div className="text-center">
                       <span
-                        className="text-white text-sm sm:text-base font-bold block mb-1"
-                        style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
+                        className="text-yellow-300 text-base sm:text-lg font-bold block mb-1"
+                        style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}
                       >
                         HINT :
                       </span>
                       <span
-                        className="text-white text-base sm:text-lg md:text-xl font-mono tracking-wider"
-                        style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
+                        className="text-white text-lg sm:text-xl md:text-2xl font-mono tracking-wider font-bold"
+                        style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.9)" }}
                       >
                         {getRevealedHint()}
                       </span>
@@ -1838,7 +1930,7 @@ const SpellTheWordGame = () => {
                 <img
                   src="/src/pages/spell-the-word/assets/page-2/image-border.png"
                   alt="Frame"
-                  className="w-64 h-52 sm:w-80 sm:h-64 md:w-96 md:h-72 lg:w-[420px] lg:h-80 object-fill"
+                  className="w-48 h-40 sm:w-64 sm:h-52 md:w-80 md:h-64 lg:w-96 lg:h-72 object-fill"
                 />
                 {/* Quiz Image - Centered inside border */}
                 <div
@@ -1869,6 +1961,17 @@ const SpellTheWordGame = () => {
                     <div className="w-full h-full flex items-center justify-center bg-slate-800 rounded-lg text-slate-400">
                       <span className="text-6xl">🖼️</span>
                     </div>
+                  )}
+                  {/* Fullscreen Button - Shows on hover */}
+                  {currentWord.word_image && (
+                    <button
+                      onClick={() => setShowImagePopup(true)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-all duration-300 rounded-lg group"
+                    >
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white text-4xl bg-black/50 rounded-full p-3">
+                        🔍
+                      </span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -1954,16 +2057,22 @@ const SpellTheWordGame = () => {
             >
               {isCorrect && (
                 <div
-                  className="text-xl font-bold text-green-400 animate-bounce drop-shadow-lg"
-                  style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                  className="text-xl sm:text-2xl font-bold text-green-400 animate-bounce"
+                  style={{
+                    textShadow:
+                      "2px 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(0,255,0,0.5)",
+                  }}
                 >
                   ✓ CORRECT!
                 </div>
               )}
               {isWrong && (
                 <div
-                  className="text-xl font-bold text-red-400 drop-shadow-lg"
-                  style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                  className="text-xl sm:text-2xl font-bold text-red-400"
+                  style={{
+                    textShadow:
+                      "2px 2px 4px rgba(0,0,0,0.9), 0 0 20px rgba(255,0,0,0.5)",
+                  }}
                 >
                   ✗ WRONG! ANSWER:{" "}
                   <span className="text-yellow-400">
@@ -2007,26 +2116,72 @@ const SpellTheWordGame = () => {
               )}
             </div>
 
-            {/* Submit Button */}
-            <button
-              onClick={handleSubmit}
-              disabled={isCorrect || isWrong}
-              className={`transition-all duration-300 ${
-                answerSlots.every((s) => s.letter !== null) &&
-                !isCorrect &&
-                !isWrong
-                  ? "hover:scale-110 active:scale-95"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
-              style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.7))" }}
-            >
-              <img
-                src="/src/pages/spell-the-word/assets/page-2/submit-button.png"
-                alt="Submit"
-                className="w-52 h-16 sm:w-64 sm:h-20 md:w-72 md:h-22"
-              />
-            </button>
+            {/* Submit & Skip Buttons */}
+            <div className="flex gap-4 items-center">
+              <button
+                onClick={handleSubmit}
+                disabled={isCorrect || isWrong}
+                className={`transition-all duration-300 ${
+                  answerSlots.every((s) => s.letter !== null) &&
+                  !isCorrect &&
+                  !isWrong
+                    ? "hover:scale-110 active:scale-95"
+                    : "opacity-50 cursor-not-allowed"
+                }`}
+                style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.7))" }}
+              >
+                <img
+                  src="/src/pages/spell-the-word/assets/page-2/submit-button.png"
+                  alt="Submit"
+                  className="w-40 h-12 sm:w-48 sm:h-14"
+                />
+              </button>
+              <button
+                onClick={handleSkip}
+                disabled={isCorrect || isWrong}
+                className={`px-6 py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-200
+                  bg-slate-700/80 text-white/90 border-2 border-slate-500
+                  ${
+                    !isCorrect && !isWrong
+                      ? "hover:bg-slate-600 hover:scale-105"
+                      : "opacity-50 cursor-not-allowed"
+                  }`}
+                style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.5))" }}
+              >
+                SKIP →
+              </button>
+            </div>
           </main>
+        </div>
+      )}
+
+      {/* Fullscreen Image Popup */}
+      {showImagePopup && currentWord && currentWord.word_image && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setShowImagePopup(false)}
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={
+                currentWord.word_image.startsWith("http") ||
+                currentWord.word_image.startsWith("data:")
+                  ? currentWord.word_image
+                  : `${import.meta.env.VITE_API_URL}/${currentWord.word_image}`
+              }
+              alt="Full Image"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            />
+            <button
+              onClick={() => setShowImagePopup(false)}
+              className="absolute -top-4 -right-4 w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xl font-bold shadow-lg transition-all duration-200 hover:scale-110"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
