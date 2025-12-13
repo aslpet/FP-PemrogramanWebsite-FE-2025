@@ -602,8 +602,15 @@ const ResultScreen = ({
                           <div className="text-amber-700 font-bold text-sm">
                             {entry.score}/{entry.max_score}
                           </div>
-                          <div className="text-slate-500 text-xs">
-                            {entry.accuracy.toFixed(0)}%
+                          <div className="text-slate-500 text-xs flex items-center justify-end gap-1">
+                            <span>
+                              ⏱️{Math.floor(entry.time_taken / 60)}:
+                              {(entry.time_taken % 60)
+                                .toString()
+                                .padStart(2, "0")}
+                            </span>
+                            <span>•</span>
+                            <span>{entry.accuracy.toFixed(0)}%</span>
                           </div>
                         </div>
                       </div>
@@ -667,8 +674,15 @@ const ResultScreen = ({
                             <div className="text-amber-700 font-bold text-sm">
                               {entry.score}/{entry.max_score}
                             </div>
-                            <div className="text-slate-500 text-xs">
-                              {entry.accuracy.toFixed(0)}%
+                            <div className="text-slate-500 text-xs flex items-center justify-end gap-1">
+                              <span>
+                                ⏱️{Math.floor(entry.time_taken / 60)}:
+                                {(entry.time_taken % 60)
+                                  .toString()
+                                  .padStart(2, "0")}
+                              </span>
+                              <span>•</span>
+                              <span>{entry.accuracy.toFixed(0)}%</span>
                             </div>
                           </div>
                         </div>
@@ -1873,7 +1887,7 @@ const SpellTheWordGame = () => {
                   }`}
                 />
                 <span
-                  className={`absolute font-bold text-xl sm:text-2xl tracking-widest transition-colors duration-300 ${
+                  className={`absolute inset-0 flex items-center justify-center -translate-y-1 font-bold text-xl sm:text-2xl tracking-widest transition-colors duration-300 ${
                     timeLeft <= 10 ? "text-red-400" : "text-white"
                   }`}
                   style={{
@@ -1980,8 +1994,9 @@ const SpellTheWordGame = () => {
                 </div>
               </div>
 
-              {/* Hint Button - Right side (absolute positioned) */}
-              <div className="absolute right-[calc(50%-260px)] sm:right-[calc(50%-280px)] md:right-[calc(50%-320px)] lg:right-[calc(50%-360px)]">
+              {/* Hint Button & Audio Button - Right side (absolute positioned) */}
+              <div className="absolute right-[calc(50%-260px)] sm:right-[calc(50%-280px)] md:right-[calc(50%-320px)] lg:right-[calc(50%-360px)] flex flex-col items-center gap-2">
+                {/* Hint Button */}
                 {currentWord.hint && (
                   <button
                     onClick={handleRevealHint}
@@ -2009,35 +2024,37 @@ const SpellTheWordGame = () => {
                     </span>
                   </button>
                 )}
+
+                {/* Audio Play Button */}
+                {currentWord.word_audio && (
+                  <button
+                    onClick={() => {
+                      if (audioRef.current) {
+                        audioRef.current.currentTime = 0;
+                        audioRef.current
+                          .play()
+                          .catch((err) =>
+                            console.error("Audio play error:", err),
+                          );
+                      }
+                    }}
+                    className="relative transition-all duration-300 hover:scale-110 active:scale-95"
+                    style={{
+                      filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))",
+                    }}
+                  >
+                    <img
+                      src="/src/pages/spell-the-word/assets/page-2/stone-button.png"
+                      alt="Play Sound"
+                      className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl">
+                      🔊
+                    </span>
+                  </button>
+                )}
               </div>
             </div>
-
-            {/* Audio Play Button */}
-            {currentWord.word_audio && (
-              <button
-                onClick={() => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = 0;
-                    audioRef.current
-                      .play()
-                      .catch((err) => console.error("Audio play error:", err));
-                  }
-                }}
-                className="relative transition-all duration-300 hover:scale-110 active:scale-95 mt-2"
-                style={{
-                  filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))",
-                }}
-              >
-                <img
-                  src="/src/pages/spell-the-word/assets/page-2/stone-button.png"
-                  alt="Play Sound"
-                  className="w-14 h-14"
-                />
-                <span className="absolute inset-0 flex items-center justify-center text-2xl">
-                  🔊
-                </span>
-              </button>
-            )}
 
             {/* Answer Slots */}
             <div className="flex flex-wrap justify-center gap-0.5 sm:gap-1.5">
@@ -2093,7 +2110,7 @@ const SpellTheWordGame = () => {
             {/* Letter Tiles Pool */}
             <div
               className={`
-                relative grid grid-cols-7 justify-items-center gap-1 sm:gap-1.5 p-2 rounded-2xl
+                relative flex flex-wrap justify-center items-center gap-1 sm:gap-1.5 p-2 rounded-2xl max-w-[680px] sm:max-w-[750px] md:max-w-[850px] mx-auto
                 transition-all duration-300 ease-out min-h-[60px]
                 ${
                   isPoolDragOver
