@@ -7,6 +7,7 @@ import {
   submitScore,
   type LeaderboardEntry,
 } from "@/api/quiz/leaderboard";
+import "./spell-the-word.css";
 
 // --- TYPE DEFINITIONS ---
 interface WordItem {
@@ -172,23 +173,33 @@ const LetterTile = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16
-        rounded-xl font-bold text-2xl sm:text-2xl md:text-3xl
+        relative w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18
         select-none
         transition-all duration-300 ease-out
         ${
           isUsed || isBeingDragged
-            ? "opacity-30 scale-90 bg-slate-600/50 text-slate-500 cursor-not-allowed"
-            : "bg-gradient-to-b from-cyan-400 to-cyan-600 text-white shadow-lg hover:scale-110 hover:shadow-xl cursor-grab active:cursor-grabbing active:scale-95 border-b-4 border-cyan-700 hover:-translate-y-1"
+            ? "opacity-30 scale-90 cursor-not-allowed"
+            : "cursor-grab active:cursor-grabbing hover:scale-110 active:scale-95 hover:-translate-y-1"
         }
         ${isBeingDragged ? "ring-2 ring-cyan-300 ring-opacity-50" : ""}
       `}
       style={{
-        textShadow: isUsed ? "none" : "0 2px 4px rgba(0,0,0,0.3)",
-        transform: isUsed ? "scale(0.9)" : undefined,
+        filter: isUsed
+          ? "grayscale(100%)"
+          : "drop-shadow(0 4px 8px rgba(0,0,0,0.5))",
       }}
     >
-      {letter.toLowerCase()}
+      <img
+        src="/src/pages/spell-the-word/assets/page-2/text-button.png"
+        alt=""
+        className="w-full h-full object-contain"
+      />
+      <span
+        className="absolute inset-0 flex items-center justify-center font-bold text-2xl sm:text-3xl text-amber-900"
+        style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.3)" }}
+      >
+        {letter.toUpperCase()}
+      </span>
     </button>
   );
 };
@@ -271,42 +282,46 @@ const AnswerSlot = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        w-11 h-13 sm:w-13 sm:h-15 md:w-14 md:h-16
-        rounded-lg font-bold text-xl sm:text-2xl md:text-3xl
+        relative w-12 h-12 sm:w-14 sm:h-14
         flex items-center justify-center
         transition-all duration-300 ease-out
         ${isBeingDragged ? "opacity-30 scale-90" : ""}
         ${
-          letter
-            ? isCorrect
-              ? "bg-gradient-to-b from-green-400 to-green-600 text-white border-b-4 border-green-700 shadow-lg scale-105"
-              : isWrong
-                ? "bg-gradient-to-b from-red-400 to-red-600 text-white border-b-4 border-red-700 shadow-lg animate-shake"
-                : "bg-gradient-to-b from-slate-100 to-slate-200 text-slate-800 border-b-4 border-slate-300 shadow-md cursor-grab hover:scale-110 hover:-translate-y-1 active:scale-95"
-            : isHovering || isDragOver
-              ? "bg-cyan-400/40 border-2 border-cyan-300 scale-110 shadow-lg"
+          !letter
+            ? isHovering || isDragOver
+              ? "bg-slate-700/80 border-2 border-cyan-400 scale-105 rounded-lg"
               : isSelected
-                ? "bg-cyan-500/30 border-2 border-cyan-400 scale-105"
-                : "bg-slate-700/30 border-2 border-dashed border-slate-400/50 hover:border-cyan-400/50 hover:bg-slate-600/30"
+                ? "bg-slate-700/60 border-2 border-cyan-500 rounded-lg"
+                : "bg-slate-800/70 border-2 border-slate-600 rounded-lg"
+            : isCorrect
+              ? "scale-105"
+              : isWrong
+                ? "animate-shake"
+                : "cursor-grab hover:scale-110 active:scale-95"
         }
       `}
+      style={{
+        filter: letter
+          ? "drop-shadow(0 4px 8px rgba(0,0,0,0.5))"
+          : "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+      }}
     >
       {letter ? (
-        <span
-          className="transition-all duration-200"
-          style={{
-            textShadow:
-              letter && !isCorrect && !isWrong
-                ? "none"
-                : "0 1px 2px rgba(0,0,0,0.2)",
-          }}
-        >
-          {letter.toLowerCase()}
-        </span>
+        <>
+          <img
+            src="/src/pages/spell-the-word/assets/page-2/text-button.png"
+            alt=""
+            className={`w-full h-full object-contain ${isCorrect ? "brightness-125 hue-rotate-90" : isWrong ? "brightness-75 hue-rotate-180" : ""}`}
+          />
+          <span
+            className="absolute inset-0 flex items-center justify-center font-bold text-xl sm:text-2xl text-amber-900"
+            style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.3)" }}
+          >
+            {letter.toUpperCase()}
+          </span>
+        </>
       ) : (
-        <span className="text-slate-500/50 transition-opacity duration-200">
-          _
-        </span>
+        <span className="text-slate-500/70 text-lg font-bold">_</span>
       )}
     </div>
   );
@@ -314,12 +329,11 @@ const AnswerSlot = ({
 
 // --- INTRO SCREEN ---
 const IntroScreen = ({
-  gameName,
-  gameDescription,
   onStart,
   onEnableAudio,
   onBack,
   isPreview = false,
+  onPlayClick,
 }: {
   gameName: string;
   gameDescription: string;
@@ -327,90 +341,93 @@ const IntroScreen = ({
   onEnableAudio?: () => void;
   onBack?: () => void;
   isPreview?: boolean;
+  onPlayClick?: () => void;
 }) => {
+  // Import assets from page-1 folder
+  const backgroundImage =
+    "/src/pages/spell-the-word/assets/page-1/background.png";
+  const titleImage = "/src/pages/spell-the-word/assets/page-1/title.png";
+  const playButtonImage =
+    "/src/pages/spell-the-word/assets/page-1/play-button.png";
+  const exitButtonImage =
+    "/src/pages/spell-the-word/assets/page-1/exit-button.png";
+
   return (
     <div
       onClick={onEnableAudio}
-      className="absolute inset-0 z-[200] flex flex-col items-center justify-center cursor-pointer overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(180deg, #87CEEB 0%, #1E90FF 50%, #006994 100%)",
-      }}
+      className="spell-the-word-game absolute inset-0 z-[200] flex flex-col items-center justify-center cursor-pointer overflow-hidden"
     >
-      {/* Back Button */}
-      {onBack && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onBack();
-          }}
-          className="absolute top-4 left-4 z-20 flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors backdrop-blur-sm pointer-events-auto"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
-          <span className="font-medium">Back</span>
-        </button>
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+        }}
+      />
+
+      {/* Overlay for better readability (optional, subtle) */}
+      <div className="absolute inset-0 bg-black/10" />
+
+      {/* Preview Badge */}
+      {isPreview && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+          <span className="inline-block px-4 py-2 bg-purple-500 text-white text-sm font-bold rounded-full shadow-lg">
+            🔍 PREVIEW MODE - This is a preview of your game
+          </span>
+        </div>
       )}
 
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-white/20 animate-float"
-            style={{
-              width: `${10 + Math.random() * 20}px`,
-              height: `${10 + Math.random() * 20}px`,
-              left: `${Math.random() * 100}%`,
-              bottom: `-20px`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${4 + Math.random() * 3}s`,
-            }}
-          />
-        ))}
-      </div>
+      {/* Main Content */}
+      <div className="z-10 flex flex-col items-center justify-center px-4">
+        {/* Title Logo */}
+        <img
+          src={titleImage}
+          alt="Spell the Word"
+          className="w-[500px] sm:w-[600px] md:w-[700px] lg:w-[800px] max-w-[90vw] h-auto mb-8 drop-shadow-2xl"
+          style={{
+            filter: "drop-shadow(0 10px 30px rgba(0,0,0,0.3))",
+          }}
+        />
 
-      <div className="z-10 text-center px-4 max-w-2xl">
-        {isPreview && (
-          <div className="mb-4">
-            <span className="inline-block px-4 py-2 bg-purple-500 text-white text-sm font-bold rounded-full shadow-lg">
-              🔍 PREVIEW MODE - This is a preview of your game
-            </span>
-          </div>
-        )}
-        <h1 className="text-5xl sm:text-7xl font-black text-white mb-4 tracking-tight drop-shadow-2xl">
-          🔤 Spell the Word
-        </h1>
-        <h2 className="text-2xl sm:text-3xl font-bold text-white/90 mb-3 drop-shadow-lg">
-          {gameName}
-        </h2>
-        <p className="text-white/80 text-base sm:text-lg mb-8 max-w-md mx-auto drop-shadow">
-          {gameDescription || "Look at the image and spell the word correctly!"}
-        </p>
+        {/* Play Button */}
         <button
           onClick={(e) => {
             e.stopPropagation();
+            onPlayClick?.();
             onStart();
           }}
-          className="group relative flex items-center justify-center px-12 py-4 bg-gradient-to-b from-amber-400 to-amber-600 rounded-2xl hover:scale-110 transition-all duration-300 shadow-xl hover:shadow-2xl mx-auto border-b-4 border-amber-700 pointer-events-auto"
+          className="pointer-events-auto transition-all duration-300 hover:scale-110 active:scale-95 mb-3"
+          style={{
+            filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.4))",
+          }}
         >
-          <span className="text-white font-black text-2xl tracking-wider drop-shadow">
-            ▶ START GAME
-          </span>
+          <img
+            src={playButtonImage}
+            alt="Play"
+            className="w-[220px] sm:w-[280px] md:w-[320px] h-auto"
+          />
         </button>
-        <p className="text-white/60 text-sm mt-6">
-          Drag letters or type with keyboard!
-        </p>
+
+        {/* Exit Button */}
+        {onBack && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlayClick?.();
+              onBack();
+            }}
+            className="pointer-events-auto transition-all duration-300 hover:scale-110 active:scale-95"
+            style={{
+              filter: "drop-shadow(0 6px 15px rgba(0,0,0,0.4))",
+            }}
+          >
+            <img
+              src={exitButtonImage}
+              alt="Exit"
+              className="w-[180px] sm:w-[230px] md:w-[270px] h-auto"
+            />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -439,12 +456,14 @@ const ResultScreen = ({
   onExit,
   leaderboard,
   isLoadingLeaderboard,
+  onPlayClick,
 }: {
   result: GameResult;
   onPlayAgain: () => void;
   onExit: () => void;
   leaderboard: LeaderboardEntry[];
   isLoadingLeaderboard: boolean;
+  onPlayClick?: () => void;
 }) => {
   const {
     correct_words,
@@ -455,25 +474,15 @@ const ResultScreen = ({
     time_taken,
   } = result;
 
-  const starCount = (percentage / 100) * 5;
-  const fullStars = Math.floor(starCount);
-  const halfStar = starCount - fullStars >= 0.5;
-  const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-
   let feedback = "Good effort!";
-  let feedbackEmoji = "👍";
   if (percentage === 100) {
     feedback = "Perfect Score!";
-    feedbackEmoji = "🏆";
   } else if (percentage >= 80) {
     feedback = "Great job!";
-    feedbackEmoji = "⭐";
   } else if (percentage >= 50) {
     feedback = "Nice try!";
-    feedbackEmoji = "👏";
   } else {
     feedback = "Keep practicing!";
-    feedbackEmoji = "💪";
   }
 
   const formatTime = (seconds: number) => {
@@ -484,64 +493,75 @@ const ResultScreen = ({
 
   return (
     <div
-      className="absolute inset-0 z-[200] flex items-center justify-center overflow-hidden"
+      className="spell-the-word-game absolute inset-0 z-[200] flex items-center justify-center overflow-hidden"
       style={{
-        background:
-          "linear-gradient(180deg, #87CEEB 0%, #1E90FF 50%, #006994 100%)",
+        backgroundImage: `url(/src/pages/spell-the-word/assets/page-3/background.png)`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
       }}
     >
-      <div className="bg-white/20 backdrop-blur-md rounded-3xl p-6 mx-4 text-center max-w-md w-full border border-white/30 shadow-2xl flex flex-col max-h-[95vh]">
-        {/* Score Section - Fixed */}
-        <div className="flex-shrink-0 space-y-2">
-          <div className="text-5xl mb-1">{feedbackEmoji}</div>
-          <h2 className="text-2xl font-bold text-white drop-shadow">
-            {feedback}
-          </h2>
-          <div className="text-4xl font-black text-white drop-shadow">
-            {correct_words}/{total_words}
-          </div>
-          <div className="text-white/90 text-sm">
-            Score: <span className="text-amber-300 font-bold">{score}</span> /{" "}
-            {max_score}
-          </div>
-          <div className="text-white/90 text-sm">
-            Time:{" "}
-            <span className="text-cyan-300 font-bold">
-              {formatTime(time_taken)}
-            </span>
-          </div>
-          <div className="text-white/90 text-sm">{percentage}% Accuracy</div>
-          <div className="flex justify-center gap-1 text-2xl">
-            {Array.from({ length: fullStars }).map((_, i) => (
-              <span key={`full-${i}`} className="text-yellow-400 drop-shadow">
-                ★
-              </span>
-            ))}
-            {halfStar && <span className="text-yellow-400/50">★</span>}
-            {Array.from({ length: emptyStars }).map((_, i) => (
-              <span key={`empty-${i}`} className="text-white/30">
-                ★
-              </span>
-            ))}
-          </div>
-        </div>
+      {/* Scroll Container */}
+      <div
+        className="relative flex flex-col items-center"
+        style={{
+          filter: "drop-shadow(0 10px 30px rgba(0,0,0,0.5))",
+        }}
+      >
+        <img
+          src="/src/pages/spell-the-word/assets/page-3/scroll.png"
+          alt="Scroll"
+          className="h-[95vh] min-w-[500px] sm:min-w-[550px] md:min-w-[600px] object-fill"
+        />
 
-        {/* Leaderboard Section - Fixed height showing top 3, scroll for 4-5 */}
-        <div className="flex-shrink-0 mt-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
-            <h3 className="text-center text-lg font-bold text-yellow-300 mb-3 flex items-center justify-center gap-2">
-              🏆 <span>Top 5 Leaderboard</span>
+        {/* Content overlaid on scroll */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-16 sm:px-20 md:px-24">
+          {/* Top Section: Title, Score, Stats */}
+          <div className="flex flex-col items-center">
+            {/* Feedback Title */}
+            <h1
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-800 text-center mb-0"
+              style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.5)" }}
+            >
+              {feedback.toUpperCase()}
+            </h1>
+
+            {/* Score Fraction */}
+            <div
+              className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-800 mb-2"
+              style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.3)" }}
+            >
+              {correct_words}/{total_words}
+            </div>
+
+            {/* Score Details */}
+            <div className="text-center space-y-0">
+              <div className="text-sm sm:text-base text-slate-700 font-bold">
+                SCORE : <span className="text-amber-600">{score}</span> /{" "}
+                {max_score}
+              </div>
+              <div className="text-sm sm:text-base text-slate-700 font-bold">
+                TIME :{" "}
+                <span className="text-blue-600">{formatTime(time_taken)}</span>
+              </div>
+              <div className="text-sm sm:text-base text-slate-700 font-bold">
+                {percentage}% ACCURACY
+              </div>
+            </div>
+          </div>
+
+          {/* Leaderboard Box */}
+          <div className="w-full bg-white/30 backdrop-blur-sm rounded-lg border border-slate-400/50 p-3">
+            <h3 className="text-center text-sm font-bold text-amber-700 mb-2">
+              🏆 TOP 5 LEADERBOARD
             </h3>
             {isLoadingLeaderboard ? (
               <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-400"></div>
-                <span className="ml-2 text-white/80 text-sm">Loading...</span>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-600"></div>
+                <span className="ml-2 text-slate-600 text-sm">Loading...</span>
               </div>
             ) : (
-              <div
-                className="max-h-[120px] overflow-y-auto space-y-1.5 scrollbar-hide"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
+              <div className="space-y-1.5">
                 {Array.from({ length: 5 }).map((_, index) => {
                   const rank = index + 1;
                   const entry = leaderboard[index];
@@ -552,39 +572,36 @@ const ResultScreen = ({
                     return `${r}.`;
                   };
 
-                  // If entry exists, show the actual data
                   if (entry) {
                     return (
                       <div
                         key={entry.id}
-                        className="flex items-center justify-between px-2 py-1.5 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                        className="flex items-center justify-between px-2 py-1.5 bg-white/70 rounded-lg"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold w-7">
+                          <span className="font-bold w-6 text-sm">
                             {getMedalEmoji(rank)}
                           </span>
-                          <div className="flex items-center gap-1.5">
-                            {entry.user?.profile_picture ? (
-                              <img
-                                src={entry.user.profile_picture}
-                                alt={entry.player_name}
-                                className="w-6 h-6 rounded-full object-cover border border-white/30"
-                              />
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs border border-white/30">
-                                {entry.player_name.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                            <span className="text-white font-medium text-sm truncate max-w-[100px]">
-                              {entry.player_name}
-                            </span>
-                          </div>
+                          {entry.user?.profile_picture ? (
+                            <img
+                              src={entry.user.profile_picture}
+                              alt={entry.player_name}
+                              className="w-6 h-6 rounded-full object-cover border border-slate-300"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-xs">
+                              {entry.player_name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="text-slate-700 font-medium text-sm truncate max-w-[80px]">
+                            {entry.player_name}
+                          </span>
                         </div>
                         <div className="text-right">
-                          <div className="text-green-400 font-bold text-sm">
+                          <div className="text-amber-700 font-bold text-sm">
                             {entry.score}/{entry.max_score}
                           </div>
-                          <div className="text-white/60 text-xs">
+                          <div className="text-slate-500 text-xs">
                             {entry.accuracy.toFixed(0)}%
                           </div>
                         </div>
@@ -592,50 +609,64 @@ const ResultScreen = ({
                     );
                   }
 
-                  // If no entry, show placeholder
                   return (
                     <div
                       key={`empty-${rank}`}
-                      className="flex items-center justify-between px-2 py-1.5 bg-white/5 rounded-lg border border-dashed border-white/20"
+                      className="flex items-center justify-between px-2 py-1.5 bg-white/40 rounded-lg border border-dashed border-slate-300"
                     >
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold w-7 text-white/40">
+                        <span className="font-bold w-6 text-sm text-slate-400">
                           {getMedalEmoji(rank)}
                         </span>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/30 font-bold text-xs border border-dashed border-white/20">
-                            ?
-                          </div>
-                          <span className="text-white/40 font-medium text-sm italic">
-                            Empty
-                          </span>
+                        <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 text-xs">
+                          ?
                         </div>
+                        <span className="text-slate-400 font-medium text-sm italic">
+                          Empty
+                        </span>
                       </div>
-                      <div className="text-right">
-                        <div className="text-white/30 font-bold text-sm">—</div>
-                      </div>
+                      <div className="text-slate-300 font-bold text-sm">—</div>
                     </div>
                   );
                 })}
               </div>
             )}
           </div>
-        </div>
 
-        {/* Buttons - Fixed */}
-        <div className="flex-shrink-0 flex flex-col gap-2 mt-4">
-          <button
-            onClick={onPlayAgain}
-            className="w-full py-2.5 bg-gradient-to-b from-amber-400 to-amber-600 text-white font-bold text-base rounded-xl hover:scale-105 transition-transform shadow-lg border-b-4 border-amber-700"
-          >
-            🔄 Play Again
-          </button>
-          <button
-            onClick={onExit}
-            className="w-full py-2.5 bg-slate-700/80 text-white font-bold text-base rounded-xl hover:bg-slate-600 transition-colors"
-          >
-            🏠 Exit to Home
-          </button>
+          {/* Buttons */}
+          <div className="flex flex-col items-center gap-2 w-full">
+            {/* Play Again Button */}
+            <button
+              onClick={() => {
+                onPlayClick?.();
+                onPlayAgain();
+              }}
+              className="transition-all duration-300 hover:scale-105 active:scale-95"
+              style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))" }}
+            >
+              <img
+                src="/src/pages/spell-the-word/assets/page-3/PlayAgain-button.png"
+                alt="Play Again"
+                className="w-48 h-14 sm:w-56 sm:h-16 md:w-64 md:h-18"
+              />
+            </button>
+
+            {/* Exit Button */}
+            <button
+              onClick={() => {
+                onPlayClick?.();
+                onExit();
+              }}
+              className="transition-all duration-300 hover:scale-105 active:scale-95"
+              style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))" }}
+            >
+              <img
+                src="/src/pages/spell-the-word/assets/page-3/exit-button.png"
+                alt="Exit"
+                className="w-48 h-14 sm:w-56 sm:h-16 md:w-64 md:h-18"
+              />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1355,13 +1386,6 @@ const SpellTheWordGame = () => {
     }
   };
 
-  // Skip word
-  const handleSkip = () => {
-    if (!gameData || isCorrect || isWrong) return;
-    playClick();
-    moveToNextWord();
-  };
-
   // Finish game
   const finishGame = () => {
     if (!gameData) return;
@@ -1567,7 +1591,7 @@ const SpellTheWordGame = () => {
   return (
     <div
       ref={gameContainerRef}
-      className="w-full min-h-screen relative overflow-hidden"
+      className="spell-the-word-game w-full min-h-screen relative overflow-hidden"
       style={{
         background:
           "linear-gradient(180deg, #87CEEB 0%, #1E90FF 50%, #006994 100%)",
@@ -1593,6 +1617,7 @@ const SpellTheWordGame = () => {
           }}
           onBack={handleExit}
           isPreview={id === "preview"}
+          onPlayClick={playClick}
         />
       )}
 
@@ -1638,54 +1663,217 @@ const SpellTheWordGame = () => {
           onExit={handleExit}
           leaderboard={leaderboard}
           isLoadingLeaderboard={isLoadingLeaderboard}
+          onPlayClick={playClick}
         />
       )}
 
       {/* Game UI */}
       {gameState === "playing" && (
-        <div className="flex flex-col h-screen">
-          {/* Header */}
-          <header className="bg-black/20 backdrop-blur-sm px-4 py-3 grid grid-cols-3 items-center relative z-[50]">
-            <div className="justify-self-start">
-              <button
-                onClick={handleExit}
-                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors border border-white/10"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                  />
-                </svg>
-                <span className="hidden sm:inline font-medium">Exit</span>
-              </button>
-            </div>
+        <div
+          className="spell-the-word-game flex flex-col h-screen relative"
+          style={{
+            backgroundImage: `url(/src/pages/spell-the-word/assets/page-2/background.png)`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {/* Dark overlay for better contrast */}
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
-            <div className="justify-self-center flex flex-col items-center">
+          {/* Header Bar */}
+          <header className="relative z-[50] px-4 py-4 flex items-center justify-between bg-gradient-to-b from-black/50 to-transparent">
+            {/* Left - Back Button */}
+            <button
+              onClick={() => {
+                playClick();
+                handleExit();
+              }}
+              className="transition-all duration-300 hover:scale-110 active:scale-95"
+              style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.6))" }}
+            >
+              <img
+                src="/src/pages/spell-the-word/assets/page-2/back-button.png"
+                alt="Exit"
+                className="w-16 h-16 sm:w-20 sm:h-20"
+              />
+            </button>
+
+            {/* Center - Word Progress */}
+            <div className="flex flex-col items-center">
               {id === "preview" && (
-                <span className="px-3 py-0.5 bg-purple-500/80 text-white text-[10px] font-bold rounded-full mb-1 tracking-wider border border-white/20">
+                <span className="px-3 py-0.5 bg-purple-500/80 text-white text-[10px] font-bold rounded-full mb-1 tracking-wider">
                   PREVIEW
                 </span>
               )}
-              <span className="font-bold text-xl text-white drop-shadow-md tracking-wide">
-                {currentWordIndex + 1} of {gameData.words.length}
+              <span
+                className="font-bold text-2xl sm:text-3xl text-white tracking-wide"
+                style={{ textShadow: "3px 3px 6px rgba(0,0,0,0.9)" }}
+              >
+                {currentWordIndex + 1} OF {gameData.words.length}
               </span>
             </div>
 
-            <div className="justify-self-end flex items-center gap-2">
-              <div className="text-white flex items-center gap-1.5 px-3 py-1.5 bg-black/20 rounded-lg border border-white/10 mr-1">
-                <span className="text-green-400 font-bold">✓</span>
-                <span className="font-bold">{correctAnswers}</span>
+            {/* Right - Score, Pause, Sound */}
+            <div className="flex items-center gap-4">
+              {/* Score Counter */}
+              <div
+                className="relative flex items-center justify-center"
+                style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.6))" }}
+              >
+                <img
+                  src="/src/pages/spell-the-word/assets/page-2/checklist-button.png"
+                  alt="Score"
+                  className="w-16 h-16 sm:w-20 sm:h-20"
+                />
+                <span
+                  className="absolute text-white font-bold text-xl sm:text-2xl"
+                  style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                >
+                  {correctAnswers}
+                </span>
               </div>
 
-              {/* Hint Button */}
+              {/* Pause Button */}
+              <button
+                onClick={() => {
+                  playClick();
+                  setIsPaused(true);
+                }}
+                className="relative transition-all duration-300 hover:scale-110 active:scale-95"
+                style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.6))" }}
+              >
+                <img
+                  src="/src/pages/spell-the-word/assets/page-2/stone-button.png"
+                  alt="Pause"
+                  className="w-14 h-14 sm:w-18 sm:h-18"
+                />
+                <span className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl">
+                  ⏸️
+                </span>
+              </button>
+
+              {/* Sound Button */}
+              <button
+                onClick={() => {
+                  playClick();
+                  setIsSoundOn(!isSoundOn);
+                }}
+                className="relative transition-all duration-300 hover:scale-110 active:scale-95"
+                style={{ filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.6))" }}
+              >
+                <img
+                  src="/src/pages/spell-the-word/assets/page-2/stone-button.png"
+                  alt="Sound"
+                  className="w-14 h-14 sm:w-18 sm:h-18"
+                />
+                <span className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl">
+                  {isSoundOn ? "🔊" : "🔇"}
+                </span>
+              </button>
+            </div>
+          </header>
+
+          {/* Main Game Area */}
+          <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 gap-4">
+            {/* Timer */}
+            {timeLeft !== null && (
+              <div
+                className={`relative flex items-center justify-center ${timeLeft <= 10 ? "animate-pulse" : ""}`}
+                style={{ filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.6))" }}
+              >
+                <img
+                  src="/src/pages/spell-the-word/assets/page-2/timer-button.png"
+                  alt="Timer"
+                  className="w-36 h-16 sm:w-44 sm:h-20"
+                />
+                <span
+                  className={`absolute font-bold text-xl sm:text-2xl tracking-widest ${timeLeft <= 10 ? "text-red-400" : "text-white"}`}
+                  style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                >
+                  {Math.floor(timeLeft / 60)}:
+                  {(timeLeft % 60).toString().padStart(2, "0")}
+                </span>
+              </div>
+            )}
+
+            {/* Image Section with Hint Box and Hint Button */}
+            <div className="flex items-center justify-center gap-6 sm:gap-10 md:gap-14">
+              {/* Hint Box - Left side */}
+              {currentWord.hint && (
+                <div
+                  className="relative flex items-center justify-center"
+                  style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))" }}
+                >
+                  <img
+                    src="/src/pages/spell-the-word/assets/page-2/hint-box.png"
+                    alt="Hint Box"
+                    className="w-44 h-28 sm:w-56 sm:h-36 md:w-64 md:h-40 object-fill"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center px-4">
+                    <div className="text-center">
+                      <span
+                        className="text-white text-sm sm:text-base font-bold block mb-1"
+                        style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
+                      >
+                        HINT :
+                      </span>
+                      <span
+                        className="text-white text-base sm:text-lg md:text-xl font-mono tracking-wider"
+                        style={{ textShadow: "1px 1px 2px rgba(0,0,0,0.8)" }}
+                      >
+                        {getRevealedHint()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Quiz Image with Stone Border */}
+              <div
+                className="relative flex items-center justify-center"
+                style={{ filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.7))" }}
+              >
+                {/* Stone Border Frame */}
+                <img
+                  src="/src/pages/spell-the-word/assets/page-2/image-border.png"
+                  alt="Frame"
+                  className="w-64 h-52 sm:w-80 sm:h-64 md:w-96 md:h-72 lg:w-[420px] lg:h-80 object-fill"
+                />
+                {/* Quiz Image - Centered inside border */}
+                <div
+                  className="absolute flex items-center justify-center"
+                  style={{
+                    top: "12%",
+                    left: "12%",
+                    right: "12%",
+                    bottom: "12%",
+                  }}
+                >
+                  {currentWord.word_image ? (
+                    <img
+                      src={
+                        currentWord.word_image.startsWith("http") ||
+                        currentWord.word_image.startsWith("data:")
+                          ? currentWord.word_image
+                          : `${import.meta.env.VITE_API_URL}/${currentWord.word_image}`
+                      }
+                      alt="Spell this word"
+                      className="w-full h-full object-cover rounded-lg"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/400x300?text=Image";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-slate-800 rounded-lg text-slate-400">
+                      <span className="text-6xl">🖼️</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Hint Button - Right side */}
               {currentWord.hint && (
                 <button
                   onClick={handleRevealHint}
@@ -1694,205 +1882,101 @@ const SpellTheWordGame = () => {
                     isCorrect ||
                     isWrong
                   }
-                  className={`
-                    px-3 py-2 rounded-lg font-medium text-sm transition-all flex items-center gap-1.5
-                    ${
-                      revealedHintCount >= (currentWord.hint?.length || 0)
-                        ? "bg-green-500/30 text-green-200 cursor-not-allowed border border-green-500/20"
-                        : "bg-amber-500 hover:bg-amber-400 text-white hover:scale-105 shadow-lg border-b-2 border-amber-600"
-                    }
-                  `}
+                  className={`relative transition-all duration-300 ${
+                    revealedHintCount >= (currentWord.hint?.length || 0)
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:scale-110 active:scale-95"
+                  }`}
+                  style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))" }}
                 >
-                  <span>💡</span>
-                  <span className="hidden sm:inline">Hint</span>
-                  {currentWord.hint && (
-                    <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded text-white/90">
-                      {revealedHintCount}/{currentWord.hint.length}
-                    </span>
-                  )}
-                </button>
-              )}
-              <button
-                onClick={() => setIsPaused(true)}
-                className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors border border-white/10"
-              >
-                ⏸️
-              </button>
-              <button
-                onClick={() => setIsSoundOn(!isSoundOn)}
-                className="p-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors border border-white/10"
-              >
-                {isSoundOn ? "🔊" : "🔇"}
-              </button>
-            </div>
-          </header>
-
-          {/* Main Game Area - Vertically centered, fills available space */}
-          <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 gap-4 relative">
-            {/* Timer + Image Section */}
-            <div className="flex flex-col items-center gap-3">
-              {/* Countdown Timer */}
-              {timeLeft !== null && (
-                <div
-                  className={`
-                    flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-sm shadow-lg border-2 transition-all duration-300
-                    ${
-                      timeLeft <= 10
-                        ? "bg-red-500 text-white border-red-300 animate-pulse"
-                        : "bg-white/20 backdrop-blur-md text-white border-white/30"
-                    }
-                  `}
-                >
-                  <span className="text-base">⏳</span>
-                  <span className="tabular-nums tracking-widest">
-                    {Math.floor(timeLeft / 60)}:
-                    {(timeLeft % 60).toString().padStart(2, "0")}
-                  </span>
-                  {timeLeft <= 10 && (
-                    <span className="text-xs uppercase ml-1 font-extrabold">
-                      Hurry!
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* Image */}
-              <div className="w-52 h-40 sm:w-72 sm:h-52 md:w-80 md:h-56 lg:w-96 lg:h-64 rounded-xl overflow-hidden bg-white shadow-xl border-4 border-white">
-                {currentWord.word_image ? (
                   <img
-                    src={
-                      currentWord.word_image.startsWith("http") ||
-                      currentWord.word_image.startsWith("data:")
-                        ? currentWord.word_image
-                        : `${import.meta.env.VITE_API_URL}/${currentWord.word_image}`
-                    }
-                    alt="Spell this word"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        "https://via.placeholder.com/400x300?text=Image";
-                    }}
+                    src="/src/pages/spell-the-word/assets/page-2/stone-button.png"
+                    alt="Hint"
+                    className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
-                    <span className="text-6xl">🖼️</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Audio Play Button - centered below image */}
-              {currentWord.word_audio && (
-                <button
-                  onClick={() => {
-                    if (audioRef.current) {
-                      audioRef.current.currentTime = 0;
-                      audioRef.current
-                        .play()
-                        .catch((err) =>
-                          console.error("Audio play error:", err),
-                        );
-                    }
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all border-b-4 border-amber-700 text-sm"
-                >
-                  <span className="text-lg">🔊</span>
-                  <span>Play Sound</span>
+                  <span className="absolute inset-0 flex items-center justify-center text-3xl sm:text-4xl">
+                    💡
+                  </span>
                 </button>
               )}
             </div>
 
-            {/* Game Controls Section */}
-            <div className="flex flex-col items-center gap-2 w-full max-w-xl">
-              {/* Hint - Progressive Reveal */}
-              {currentWord.hint && (
-                <div className="text-white/90 text-base text-center flex flex-col items-center gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-cyan-200">Hint:</span>
-                    <span className="font-mono tracking-wider">
-                      {getRevealedHint()
-                        .split("")
-                        .map((char, index) => (
-                          <span
-                            key={index}
-                            className={`
-                          inline-block transition-all duration-300
-                          ${
-                            char === "_"
-                              ? "text-slate-400/60 mx-0.5"
-                              : "text-white font-bold animate-pulse-once"
-                          }
-                        `}
-                            style={{
-                              animationDelay: `${index * 50}ms`,
-                            }}
-                          >
-                            {char}
-                          </span>
-                        ))}
-                    </span>
-                  </div>
-                  {revealedHintCount === 0 && (
-                    <span className="text-xs text-cyan-300/60">
-                      Press the 💡 Hint button to reveal letters
-                    </span>
-                  )}
-                  {revealedHintCount > 0 &&
-                    revealedHintCount < (currentWord.hint?.length || 0) && (
-                      <span className="text-xs text-amber-300/80">
-                        {(currentWord.hint?.length || 0) - revealedHintCount}{" "}
-                        letters remaining
-                      </span>
-                    )}
-                  {revealedHintCount >= (currentWord.hint?.length || 0) && (
-                    <span className="text-xs text-green-300">
-                      ✓ Fully revealed!
-                    </span>
-                  )}
+            {/* Audio Play Button */}
+            {currentWord.word_audio && (
+              <button
+                onClick={() => {
+                  if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    audioRef.current
+                      .play()
+                      .catch((err) => console.error("Audio play error:", err));
+                  }
+                }}
+                className="relative transition-all duration-300 hover:scale-110 active:scale-95 mt-2"
+                style={{
+                  filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.6))",
+                }}
+              >
+                <img
+                  src="/src/pages/spell-the-word/assets/page-2/stone-button.png"
+                  alt="Play Sound"
+                  className="w-14 h-14"
+                />
+                <span className="absolute inset-0 flex items-center justify-center text-2xl">
+                  🔊
+                </span>
+              </button>
+            )}
+
+            {/* Answer Slots */}
+            <div className="flex flex-wrap justify-center gap-0.5 sm:gap-1.5">
+              {answerSlots.map((slot, index) => (
+                <AnswerSlot
+                  key={index}
+                  letter={slot.letter}
+                  slotIndex={index}
+                  onClick={() => handleSlotClick(index)}
+                  isCorrect={isCorrect}
+                  isWrong={isWrong}
+                  isSelected={selectedSlot === index && !isCorrect && !isWrong}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragStart={handleSlotDragStart}
+                />
+              ))}
+            </div>
+
+            {/* Feedback */}
+            <div
+              className={`flex items-center justify-center transition-all duration-200 overflow-hidden ${
+                isCorrect || isWrong ? "h-8" : "h-0"
+              }`}
+            >
+              {isCorrect && (
+                <div
+                  className="text-xl font-bold text-green-400 animate-bounce drop-shadow-lg"
+                  style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                >
+                  ✓ CORRECT!
                 </div>
               )}
+              {isWrong && (
+                <div
+                  className="text-xl font-bold text-red-400 drop-shadow-lg"
+                  style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                >
+                  ✗ WRONG! ANSWER:{" "}
+                  <span className="text-yellow-400">
+                    {lastCorrectAnswer.toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
 
-              {/* Answer Slots */}
-              <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
-                {answerSlots.map((slot, index) => (
-                  <AnswerSlot
-                    key={index}
-                    letter={slot.letter}
-                    slotIndex={index}
-                    onClick={() => handleSlotClick(index)}
-                    isCorrect={isCorrect}
-                    isWrong={isWrong}
-                    isSelected={
-                      selectedSlot === index && !isCorrect && !isWrong
-                    }
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragStart={handleSlotDragStart}
-                  />
-                ))}
-              </div>
-
-              {/* Feedback - Only takes space when shown */}
-              <div
-                className={`flex items-center justify-center transition-all duration-200 overflow-hidden ${
-                  isCorrect || isWrong ? "h-8 mt-2" : "h-0"
-                }`}
-              >
-                {isCorrect && (
-                  <div className="text-xl font-bold text-green-300 animate-bounce drop-shadow-lg">
-                    ✓ Correct!
-                  </div>
-                )}
-                {isWrong && (
-                  <div className="text-xl font-bold text-red-300 drop-shadow-lg">
-                    ✗ Wrong! Answer:{" "}
-                    <span className="text-yellow-300">{lastCorrectAnswer}</span>
-                  </div>
-                )}
-              </div>
-              {/* Letter Tiles Pool - Drop zone to return letters */}
-              <div
-                className={`
-                relative flex flex-wrap justify-center gap-2 sm:gap-3 max-w-xl p-2 rounded-2xl
+            {/* Letter Tiles Pool */}
+            <div
+              className={`
+                relative flex flex-wrap justify-center gap-1 sm:gap-1.5 max-w-2xl p-2 rounded-2xl
                 transition-all duration-300 ease-out min-h-[60px]
                 ${
                   isPoolDragOver
@@ -1900,57 +1984,48 @@ const SpellTheWordGame = () => {
                     : "bg-transparent"
                 }
               `}
-                onDrop={handleDropToPool}
-                onDragOver={handlePoolDragOver}
-                onDragLeave={handlePoolDragLeave}
-              >
-                {shuffledLetters.map((letter, index) => (
-                  <LetterTile
-                    key={index}
-                    letter={letter}
-                    onClick={() => handleLetterClick(index)}
-                    isUsed={usedLetterIndices.has(index)}
-                    index={index}
-                    onDragStart={() => {}}
-                  />
-                ))}
-                {isPoolDragOver && (
-                  <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none animate-pulse">
-                    <span className="text-cyan-300 text-sm font-medium bg-slate-900/70 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-                      <span>⬇️</span> Drop here to return letter
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Submit & Skip Buttons */}
-              <div className="flex gap-4">
-                <button
-                  onClick={handleSubmit}
-                  disabled={isCorrect || isWrong}
-                  className={`px-10 py-3.5 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg ${
-                    answerSlots.every((s) => s.letter !== null) &&
-                    !isCorrect &&
-                    !isWrong
-                      ? "bg-gradient-to-b from-green-400 to-green-600 text-white hover:scale-105 hover:shadow-xl border-b-4 border-green-700 active:scale-95"
-                      : "bg-slate-500/40 text-slate-400 cursor-not-allowed border-b-4 border-slate-600/40"
-                  }`}
-                >
-                  ✓ Submit
-                </button>
-                <button
-                  onClick={handleSkip}
-                  disabled={isCorrect || isWrong}
-                  className={`px-8 py-3.5 rounded-xl font-bold text-lg transition-all duration-200 ${
-                    !isCorrect && !isWrong
-                      ? "bg-white/20 hover:bg-white/30 text-white/90 hover:scale-105 border border-white/20"
-                      : "bg-slate-500/20 text-slate-400 cursor-not-allowed border border-slate-500/20"
-                  }`}
-                >
-                  Skip →
-                </button>
-              </div>
+              onDrop={handleDropToPool}
+              onDragOver={handlePoolDragOver}
+              onDragLeave={handlePoolDragLeave}
+            >
+              {shuffledLetters.map((letter, index) => (
+                <LetterTile
+                  key={index}
+                  letter={letter}
+                  onClick={() => handleLetterClick(index)}
+                  isUsed={usedLetterIndices.has(index)}
+                  index={index}
+                  onDragStart={() => {}}
+                />
+              ))}
+              {isPoolDragOver && (
+                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none animate-pulse">
+                  <span className="text-cyan-300 text-sm font-medium bg-slate-900/70 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                    <span>⬇️</span> DROP HERE TO RETURN LETTER
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Submit Button */}
+            <button
+              onClick={handleSubmit}
+              disabled={isCorrect || isWrong}
+              className={`transition-all duration-300 ${
+                answerSlots.every((s) => s.letter !== null) &&
+                !isCorrect &&
+                !isWrong
+                  ? "hover:scale-110 active:scale-95"
+                  : "opacity-50 cursor-not-allowed"
+              }`}
+              style={{ filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.7))" }}
+            >
+              <img
+                src="/src/pages/spell-the-word/assets/page-2/submit-button.png"
+                alt="Submit"
+                className="w-52 h-16 sm:w-64 sm:h-20 md:w-72 md:h-22"
+              />
+            </button>
           </main>
         </div>
       )}

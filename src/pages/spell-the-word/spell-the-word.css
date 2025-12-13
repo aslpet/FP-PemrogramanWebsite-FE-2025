@@ -1,0 +1,39 @@
+/* Spell the Word - Custom Styles */
+
+/* Comic Jungle Font */
+@font-face {
+  font-family: 'Comic Jungle';
+  src: url('./assets/fonts/ComicJungle.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Apply Comic Jungle font and uppercase to all game elements */
+.spell-the-word-game {
+  font-family: 'Comic Jungle', 'Comic Sans MS', cursive, sans-serif;
+  text-transform: uppercase;
+}
+
+/* Ensure all text elements use the font */
+.spell-the-word-game h1,
+.spell-the-word-game h2,
+.spell-the-word-game h3,
+.spell-the-word-game h4,
+.spell-the-word-game h5,
+.spell-the-word-game h6,
+.spell-the-word-game p,
+.spell-the-word-game span,
+.spell-the-word-game button,
+.spell-the-word-game div,
+.spell-the-word-game label,
+.spell-the-word-game input {
+  font-family: 'Comic Jungle', 'Comic Sans MS', cursive, sans-serif;
+  text-transform: uppercase;
+}
+
+/* Letter tiles should show lowercase for game mechanics but styled with the font */
+.spell-the-word-game .letter-tile {
+  font-family: 'Comic Jungle', 'Comic Sans MS', cursive, sans-serif;
+  text-transform: lowercase;
+}
