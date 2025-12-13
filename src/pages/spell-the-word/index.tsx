@@ -345,7 +345,7 @@ const IntroScreen = ({
 }) => {
   // Import assets from page-1 folder
   const backgroundImage =
-    "/src/pages/spell-the-word/assets/page-1/background.png";
+    "/src/pages/spell-the-word/assets/page-1/background.jpg";
   const titleImage = "/src/pages/spell-the-word/assets/page-1/title.png";
   const playButtonImage =
     "/src/pages/spell-the-word/assets/page-1/play-button.png";
@@ -495,7 +495,7 @@ const ResultScreen = ({
     <div
       className="spell-the-word-game absolute inset-0 z-[200] flex items-center justify-center overflow-hidden"
       style={{
-        backgroundImage: `url(/src/pages/spell-the-word/assets/page-3/background.png)`,
+        backgroundImage: `url(/src/pages/spell-the-word/assets/page-3/background.jpg)`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -1672,7 +1672,7 @@ const SpellTheWordGame = () => {
         <div
           className="spell-the-word-game flex flex-col h-screen relative"
           style={{
-            backgroundImage: `url(/src/pages/spell-the-word/assets/page-2/background.png)`,
+            backgroundImage: `url(/src/pages/spell-the-word/assets/page-2/background.jpg)`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
