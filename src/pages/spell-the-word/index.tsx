@@ -172,8 +172,8 @@ const LetterTile = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        relative w-14 h-14 sm:w-16 sm:h-16
-        rounded-xl font-bold text-2xl sm:text-3xl
+        relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16
+        rounded-xl font-bold text-2xl sm:text-2xl md:text-3xl
         select-none
         transition-all duration-300 ease-out
         ${
@@ -271,8 +271,8 @@ const AnswerSlot = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        w-12 h-14 sm:w-14 sm:h-16
-        rounded-lg font-bold text-2xl sm:text-3xl
+        w-11 h-13 sm:w-13 sm:h-15 md:w-14 md:h-16
+        rounded-lg font-bold text-xl sm:text-2xl md:text-3xl
         flex items-center justify-center
         transition-all duration-300 ease-out
         ${isBeingDragged ? "opacity-30 scale-90" : ""}
@@ -484,66 +484,72 @@ const ResultScreen = ({
 
   return (
     <div
-      className="absolute inset-0 z-[200] flex items-start justify-center overflow-y-auto py-8"
+      className="absolute inset-0 z-[200] flex items-center justify-center overflow-hidden"
       style={{
         background:
           "linear-gradient(180deg, #87CEEB 0%, #1E90FF 50%, #006994 100%)",
       }}
     >
-      <div className="bg-white/20 backdrop-blur-md rounded-3xl p-8 mx-4 text-center max-w-md w-full space-y-4 border border-white/30 shadow-2xl my-auto min-h-fit">
-        <div className="text-6xl mb-2">{feedbackEmoji}</div>
-        <h2 className="text-3xl font-bold text-white drop-shadow">
-          {feedback}
-        </h2>
-        <div className="text-5xl font-black text-white drop-shadow">
-          {correct_words}/{total_words}
-        </div>
-        <div className="text-white/90">
-          Score: <span className="text-amber-300 font-bold">{score}</span> /{" "}
-          {max_score}
-        </div>
-        <div className="text-white/90">
-          Time:{" "}
-          <span className="text-cyan-300 font-bold">
-            {formatTime(time_taken)}
-          </span>
-        </div>
-        <div className="text-white/90">{percentage}% Accuracy</div>
-        <div className="flex justify-center gap-1 text-3xl">
-          {Array.from({ length: fullStars }).map((_, i) => (
-            <span key={`full-${i}`} className="text-yellow-400 drop-shadow">
-              ★
+      <div className="bg-white/20 backdrop-blur-md rounded-3xl p-6 mx-4 text-center max-w-md w-full border border-white/30 shadow-2xl flex flex-col max-h-[95vh]">
+        {/* Score Section - Fixed */}
+        <div className="flex-shrink-0 space-y-2">
+          <div className="text-5xl mb-1">{feedbackEmoji}</div>
+          <h2 className="text-2xl font-bold text-white drop-shadow">
+            {feedback}
+          </h2>
+          <div className="text-4xl font-black text-white drop-shadow">
+            {correct_words}/{total_words}
+          </div>
+          <div className="text-white/90 text-sm">
+            Score: <span className="text-amber-300 font-bold">{score}</span> /{" "}
+            {max_score}
+          </div>
+          <div className="text-white/90 text-sm">
+            Time:{" "}
+            <span className="text-cyan-300 font-bold">
+              {formatTime(time_taken)}
             </span>
-          ))}
-          {halfStar && <span className="text-yellow-400/50">★</span>}
-          {Array.from({ length: emptyStars }).map((_, i) => (
-            <span key={`empty-${i}`} className="text-white/30">
-              ★
-            </span>
-          ))}
+          </div>
+          <div className="text-white/90 text-sm">{percentage}% Accuracy</div>
+          <div className="flex justify-center gap-1 text-2xl">
+            {Array.from({ length: fullStars }).map((_, i) => (
+              <span key={`full-${i}`} className="text-yellow-400 drop-shadow">
+                ★
+              </span>
+            ))}
+            {halfStar && <span className="text-yellow-400/50">★</span>}
+            {Array.from({ length: emptyStars }).map((_, i) => (
+              <span key={`empty-${i}`} className="text-white/30">
+                ★
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* Leaderboard Section - Top 5 Only */}
-        <div className="mt-6 w-full max-w-md">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
-            <h3 className="text-center text-xl font-bold text-yellow-300 mb-4 flex items-center justify-center gap-2">
+        {/* Leaderboard Section - Fixed height showing top 3, scroll for 4-5 */}
+        <div className="flex-shrink-0 mt-4">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
+            <h3 className="text-center text-lg font-bold text-yellow-300 mb-3 flex items-center justify-center gap-2">
               🏆 <span>Top 5 Leaderboard</span>
             </h3>
             {isLoadingLeaderboard ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-                <span className="ml-3 text-white/80">Loading...</span>
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-400"></div>
+                <span className="ml-2 text-white/80 text-sm">Loading...</span>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div
+                className="max-h-[120px] overflow-y-auto space-y-1.5 scrollbar-hide"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
                 {Array.from({ length: 5 }).map((_, index) => {
                   const rank = index + 1;
                   const entry = leaderboard[index];
-                  const getMedalEmoji = (rank: number) => {
-                    if (rank === 1) return "🥇";
-                    if (rank === 2) return "🥈";
-                    if (rank === 3) return "🥉";
-                    return `${rank}.`;
+                  const getMedalEmoji = (r: number) => {
+                    if (r === 1) return "🥇";
+                    if (r === 2) return "🥈";
+                    if (r === 3) return "🥉";
+                    return `${r}.`;
                   };
 
                   // If entry exists, show the actual data
@@ -551,39 +557,35 @@ const ResultScreen = ({
                     return (
                       <div
                         key={entry.id}
-                        className="flex items-center justify-between px-3 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+                        className="flex items-center justify-between px-2 py-1.5 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl font-bold w-8">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold w-7">
                             {getMedalEmoji(rank)}
                           </span>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             {entry.user?.profile_picture ? (
                               <img
                                 src={entry.user.profile_picture}
                                 alt={entry.player_name}
-                                className="w-8 h-8 rounded-full object-cover border-2 border-white/30"
+                                className="w-6 h-6 rounded-full object-cover border border-white/30"
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm border-2 border-white/30">
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-xs border border-white/30">
                                 {entry.player_name.charAt(0).toUpperCase()}
                               </div>
                             )}
-                            <span className="text-white font-medium">
+                            <span className="text-white font-medium text-sm truncate max-w-[100px]">
                               {entry.player_name}
                             </span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-green-400 font-bold">
+                          <div className="text-green-400 font-bold text-sm">
                             {entry.score}/{entry.max_score}
                           </div>
                           <div className="text-white/60 text-xs">
-                            {entry.accuracy.toFixed(0)}% •{" "}
-                            {Math.floor(entry.time_taken / 60)}:
-                            {(entry.time_taken % 60)
-                              .toString()
-                              .padStart(2, "0")}
+                            {entry.accuracy.toFixed(0)}%
                           </div>
                         </div>
                       </div>
@@ -594,24 +596,23 @@ const ResultScreen = ({
                   return (
                     <div
                       key={`empty-${rank}`}
-                      className="flex items-center justify-between px-3 py-2 bg-white/5 rounded-lg border border-dashed border-white/20"
+                      className="flex items-center justify-between px-2 py-1.5 bg-white/5 rounded-lg border border-dashed border-white/20"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl font-bold w-8 text-white/40">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold w-7 text-white/40">
                           {getMedalEmoji(rank)}
                         </span>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/30 font-bold text-sm border-2 border-dashed border-white/20">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-white/30 font-bold text-xs border border-dashed border-white/20">
                             ?
                           </div>
-                          <span className="text-white/40 font-medium italic">
-                            — Empty —
+                          <span className="text-white/40 font-medium text-sm italic">
+                            Empty
                           </span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-white/30 font-bold">—</div>
-                        <div className="text-white/20 text-xs">—</div>
+                        <div className="text-white/30 font-bold text-sm">—</div>
                       </div>
                     </div>
                   );
@@ -621,16 +622,17 @@ const ResultScreen = ({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 mt-6">
+        {/* Buttons - Fixed */}
+        <div className="flex-shrink-0 flex flex-col gap-2 mt-4">
           <button
             onClick={onPlayAgain}
-            className="w-full py-3 bg-gradient-to-b from-amber-400 to-amber-600 text-white font-bold text-lg rounded-xl hover:scale-105 transition-transform shadow-lg border-b-4 border-amber-700"
+            className="w-full py-2.5 bg-gradient-to-b from-amber-400 to-amber-600 text-white font-bold text-base rounded-xl hover:scale-105 transition-transform shadow-lg border-b-4 border-amber-700"
           >
             🔄 Play Again
           </button>
           <button
             onClick={onExit}
-            className="w-full py-3 bg-slate-700/80 text-white font-bold text-lg rounded-xl hover:bg-slate-600 transition-colors"
+            className="w-full py-2.5 bg-slate-700/80 text-white font-bold text-base rounded-xl hover:bg-slate-600 transition-colors"
           >
             🏠 Exit to Home
           </button>
@@ -1212,7 +1214,7 @@ const SpellTheWordGame = () => {
 
   // Handle slot drag start (for returning to pool via failed drop)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleSlotDragStart = (slotIndex: number) => {
+  const handleSlotDragStart = (_slotIndex: number) => {
     // Visual feedback is handled by component state
   };
 
@@ -1344,6 +1346,10 @@ const SpellTheWordGame = () => {
       const nextIndex = currentWordIndex + 1;
       setCurrentWordIndex(nextIndex);
       initializeWord(nextIndex);
+      // Reset timer for new word (time_limit is per-word, not total)
+      if (gameData.time_limit) {
+        setTimeLeft(gameData.time_limit);
+      }
     } else {
       finishGame();
     }
@@ -1377,17 +1383,56 @@ const SpellTheWordGame = () => {
     playSuccess();
   };
 
-  // Monitor Time Left
-  useEffect(() => {
-    if (timeLeft === 0 && gameState === "playing") {
+  // Handle timeout - auto-check if slots filled, otherwise get correct answer and move to next
+  const handleTimeOut = async () => {
+    if (!gameData) return;
+
+    // Check if all slots are filled - auto-submit the answer
+    const allFilled = answerSlots.every((s) => s.letter !== null);
+    if (allFilled) {
+      // Auto-submit the answer
+      await handleSubmit();
+      return;
+    }
+
+    // Slots not filled - mark as wrong and show correct answer
+    // For demo mode, use local correct words
+    if (demoCorrectWords.length > 0) {
+      const correctWord = demoCorrectWords[currentWordIndex];
+      setLastCorrectAnswer(correctWord);
       setIsWrong(true);
       playWrong();
-      const timeout = setTimeout(() => {
-        finishGame();
-      }, 1500);
-      return () => clearTimeout(timeout);
+      setTimeout(() => moveToNextWord(), 1500);
+      return;
     }
-  }, [timeLeft, gameState]); // finishGame is accessed from closure. Warning: missing dep finishGame.
+
+    // For API mode, call check endpoint with empty answer to get correct word
+    try {
+      const response = await api.post(
+        `/api/game/game-type/spell-the-word/${id}/check`,
+        {
+          answers: [{ word_index: currentWordIndex, user_answer: "" }],
+        },
+      );
+      const result = response.data.data.results[0];
+      setLastCorrectAnswer(result.correct_answer || "");
+    } catch (err) {
+      console.error("Failed to get correct answer:", err);
+      setLastCorrectAnswer("(tidak tersedia)");
+    }
+
+    setIsWrong(true);
+    playWrong();
+    setTimeout(() => moveToNextWord(), 1500);
+  };
+
+  // Monitor Time Left - when time runs out on current word, move to next
+  useEffect(() => {
+    if (timeLeft === 0 && gameState === "playing" && !isWrong && !isCorrect) {
+      handleTimeOut();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft, gameState]);
 
   // Main Timer Interval
   useEffect(() => {
@@ -1682,36 +1727,37 @@ const SpellTheWordGame = () => {
             </div>
           </header>
 
-          {/* Main Game Area */}
-          <main className="flex-1 flex flex-col items-center justify-center px-4 py-6 gap-6 relative">
-            {/* Countdown Timer - Displayed above image */}
-            {timeLeft !== null && (
-              <div
-                className={`
-                flex items-center gap-2 px-6 py-2 rounded-full font-bold text-lg shadow-xl border-2 mb-[-10px] z-10 transition-all duration-300
-                ${
-                  timeLeft <= 10
-                    ? "bg-red-500 text-white border-red-300 animate-pulse scale-110"
-                    : "bg-white/20 backdrop-blur-md text-white border-white/30"
-                }
-              `}
-              >
-                <span className="text-xl">⏳</span>
-                <span className="tabular-nums tracking-widest">
-                  {Math.floor(timeLeft / 60)}:
-                  {(timeLeft % 60).toString().padStart(2, "0")}
-                </span>
-                {timeLeft <= 10 && (
-                  <span className="text-xs uppercase ml-1 font-extrabold animate-bounce">
-                    Hurry!
+          {/* Main Game Area - Vertically centered, fills available space */}
+          <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 gap-4 relative">
+            {/* Timer + Image Section */}
+            <div className="flex flex-col items-center gap-3">
+              {/* Countdown Timer */}
+              {timeLeft !== null && (
+                <div
+                  className={`
+                    flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-sm shadow-lg border-2 transition-all duration-300
+                    ${
+                      timeLeft <= 10
+                        ? "bg-red-500 text-white border-red-300 animate-pulse"
+                        : "bg-white/20 backdrop-blur-md text-white border-white/30"
+                    }
+                  `}
+                >
+                  <span className="text-base">⏳</span>
+                  <span className="tabular-nums tracking-widest">
+                    {Math.floor(timeLeft / 60)}:
+                    {(timeLeft % 60).toString().padStart(2, "0")}
                   </span>
-                )}
-              </div>
-            )}
+                  {timeLeft <= 10 && (
+                    <span className="text-xs uppercase ml-1 font-extrabold">
+                      Hurry!
+                    </span>
+                  )}
+                </div>
+              )}
 
-            {/* Image with Audio Button */}
-            <div className="flex flex-col items-center gap-4 relative">
-              <div className="w-64 h-48 sm:w-80 sm:h-60 md:w-96 md:h-72 rounded-xl overflow-hidden bg-white shadow-2xl border-4 border-white">
+              {/* Image */}
+              <div className="w-52 h-40 sm:w-72 sm:h-52 md:w-80 md:h-56 lg:w-96 lg:h-64 rounded-xl overflow-hidden bg-white shadow-xl border-4 border-white">
                 {currentWord.word_image ? (
                   <img
                     src={
@@ -1747,26 +1793,28 @@ const SpellTheWordGame = () => {
                         );
                     }
                   }}
-                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all border-b-4 border-amber-700"
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all border-b-4 border-amber-700 text-sm"
                 >
-                  <span className="text-2xl">🔊</span>
+                  <span className="text-lg">🔊</span>
                   <span>Play Sound</span>
                 </button>
               )}
             </div>
 
-            {/* Hint - Progressive Reveal */}
-            {currentWord.hint && (
-              <div className="text-white/90 text-lg text-center flex flex-col items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-cyan-200">Hint:</span>
-                  <span className="font-mono tracking-wider">
-                    {getRevealedHint()
-                      .split("")
-                      .map((char, index) => (
-                        <span
-                          key={index}
-                          className={`
+            {/* Game Controls Section */}
+            <div className="flex flex-col items-center gap-2 w-full max-w-xl">
+              {/* Hint - Progressive Reveal */}
+              {currentWord.hint && (
+                <div className="text-white/90 text-base text-center flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-cyan-200">Hint:</span>
+                    <span className="font-mono tracking-wider">
+                      {getRevealedHint()
+                        .split("")
+                        .map((char, index) => (
+                          <span
+                            key={index}
+                            className={`
                           inline-block transition-all duration-300
                           ${
                             char === "_"
@@ -1774,121 +1822,134 @@ const SpellTheWordGame = () => {
                               : "text-white font-bold animate-pulse-once"
                           }
                         `}
-                          style={{
-                            animationDelay: `${index * 50}ms`,
-                          }}
-                        >
-                          {char}
-                        </span>
-                      ))}
-                  </span>
-                </div>
-                {revealedHintCount === 0 && (
-                  <span className="text-xs text-cyan-300/60">
-                    Press the 💡 Hint button to reveal letters
-                  </span>
-                )}
-                {revealedHintCount > 0 &&
-                  revealedHintCount < (currentWord.hint?.length || 0) && (
-                    <span className="text-xs text-amber-300/80">
-                      {(currentWord.hint?.length || 0) - revealedHintCount}{" "}
-                      letters remaining
+                            style={{
+                              animationDelay: `${index * 50}ms`,
+                            }}
+                          >
+                            {char}
+                          </span>
+                        ))}
+                    </span>
+                  </div>
+                  {revealedHintCount === 0 && (
+                    <span className="text-xs text-cyan-300/60">
+                      Press the 💡 Hint button to reveal letters
                     </span>
                   )}
-                {revealedHintCount >= (currentWord.hint?.length || 0) && (
-                  <span className="text-xs text-green-300">
-                    ✓ Fully revealed!
-                  </span>
+                  {revealedHintCount > 0 &&
+                    revealedHintCount < (currentWord.hint?.length || 0) && (
+                      <span className="text-xs text-amber-300/80">
+                        {(currentWord.hint?.length || 0) - revealedHintCount}{" "}
+                        letters remaining
+                      </span>
+                    )}
+                  {revealedHintCount >= (currentWord.hint?.length || 0) && (
+                    <span className="text-xs text-green-300">
+                      ✓ Fully revealed!
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Answer Slots */}
+              <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+                {answerSlots.map((slot, index) => (
+                  <AnswerSlot
+                    key={index}
+                    letter={slot.letter}
+                    slotIndex={index}
+                    onClick={() => handleSlotClick(index)}
+                    isCorrect={isCorrect}
+                    isWrong={isWrong}
+                    isSelected={
+                      selectedSlot === index && !isCorrect && !isWrong
+                    }
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragStart={handleSlotDragStart}
+                  />
+                ))}
+              </div>
+
+              {/* Feedback - Only takes space when shown */}
+              <div
+                className={`flex items-center justify-center transition-all duration-200 overflow-hidden ${
+                  isCorrect || isWrong ? "h-8 mt-2" : "h-0"
+                }`}
+              >
+                {isCorrect && (
+                  <div className="text-xl font-bold text-green-300 animate-bounce drop-shadow-lg">
+                    ✓ Correct!
+                  </div>
+                )}
+                {isWrong && (
+                  <div className="text-xl font-bold text-red-300 drop-shadow-lg">
+                    ✗ Wrong! Answer:{" "}
+                    <span className="text-yellow-300">{lastCorrectAnswer}</span>
+                  </div>
                 )}
               </div>
-            )}
-
-            {/* Answer Slots */}
-            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
-              {answerSlots.map((slot, index) => (
-                <AnswerSlot
-                  key={index}
-                  letter={slot.letter}
-                  slotIndex={index}
-                  onClick={() => handleSlotClick(index)}
-                  isCorrect={isCorrect}
-                  isWrong={isWrong}
-                  isSelected={selectedSlot === index && !isCorrect && !isWrong}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragStart={handleSlotDragStart}
-                />
-              ))}
-            </div>
-
-            {/* Feedback */}
-            {isCorrect && (
-              <div className="text-2xl font-bold text-green-300 animate-bounce drop-shadow-lg">
-                ✓ Correct!
-              </div>
-            )}
-            {isWrong && (
-              <div className="text-2xl font-bold text-red-300 drop-shadow-lg">
-                ✗ Wrong! Answer: {lastCorrectAnswer}
-              </div>
-            )}
-
-            {/* Letter Tiles Pool - Drop zone to return letters */}
-            <div
-              className={`
-                relative flex flex-wrap justify-center gap-2 sm:gap-3 max-w-lg p-4 rounded-2xl
-                transition-all duration-300 ease-out min-h-[80px]
+              {/* Letter Tiles Pool - Drop zone to return letters */}
+              <div
+                className={`
+                relative flex flex-wrap justify-center gap-2 sm:gap-3 max-w-xl p-2 rounded-2xl
+                transition-all duration-300 ease-out min-h-[60px]
                 ${
                   isPoolDragOver
                     ? "bg-cyan-500/20 ring-2 ring-cyan-400 ring-opacity-50 scale-[1.02] shadow-lg"
                     : "bg-transparent"
                 }
               `}
-              onDrop={handleDropToPool}
-              onDragOver={handlePoolDragOver}
-              onDragLeave={handlePoolDragLeave}
-            >
-              {shuffledLetters.map((letter, index) => (
-                <LetterTile
-                  key={index}
-                  letter={letter}
-                  onClick={() => handleLetterClick(index)}
-                  isUsed={usedLetterIndices.has(index)}
-                  index={index}
-                  onDragStart={() => {}}
-                />
-              ))}
-              {isPoolDragOver && (
-                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none animate-pulse">
-                  <span className="text-cyan-300 text-sm font-medium bg-slate-900/70 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-                    <span>⬇️</span> Drop here to return letter
-                  </span>
-                </div>
-              )}
-            </div>
+                onDrop={handleDropToPool}
+                onDragOver={handlePoolDragOver}
+                onDragLeave={handlePoolDragLeave}
+              >
+                {shuffledLetters.map((letter, index) => (
+                  <LetterTile
+                    key={index}
+                    letter={letter}
+                    onClick={() => handleLetterClick(index)}
+                    isUsed={usedLetterIndices.has(index)}
+                    index={index}
+                    onDragStart={() => {}}
+                  />
+                ))}
+                {isPoolDragOver && (
+                  <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 pointer-events-none animate-pulse">
+                    <span className="text-cyan-300 text-sm font-medium bg-slate-900/70 px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                      <span>⬇️</span> Drop here to return letter
+                    </span>
+                  </div>
+                )}
+              </div>
 
-            {/* Submit & Skip */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleSubmit}
-                disabled={isCorrect || isWrong}
-                className={`px-8 py-3 rounded-xl font-bold text-lg transition-all ${
-                  answerSlots.every((s) => s.letter !== null) &&
-                  !isCorrect &&
-                  !isWrong
-                    ? "bg-gradient-to-b from-amber-400 to-amber-600 text-white shadow-lg hover:scale-105 border-b-4 border-amber-700"
-                    : "bg-slate-400/50 text-slate-300 cursor-not-allowed"
-                }`}
-              >
-                Submit Answer
-              </button>
-              <button
-                onClick={handleSkip}
-                disabled={isCorrect || isWrong}
-                className="px-6 py-3 bg-white/20 hover:bg-white/30 text-white/80 rounded-xl transition-colors text-sm font-medium"
-              >
-                Skip →
-              </button>
+              {/* Submit & Skip Buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={handleSubmit}
+                  disabled={isCorrect || isWrong}
+                  className={`px-10 py-3.5 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg ${
+                    answerSlots.every((s) => s.letter !== null) &&
+                    !isCorrect &&
+                    !isWrong
+                      ? "bg-gradient-to-b from-green-400 to-green-600 text-white hover:scale-105 hover:shadow-xl border-b-4 border-green-700 active:scale-95"
+                      : "bg-slate-500/40 text-slate-400 cursor-not-allowed border-b-4 border-slate-600/40"
+                  }`}
+                >
+                  ✓ Submit
+                </button>
+                <button
+                  onClick={handleSkip}
+                  disabled={isCorrect || isWrong}
+                  className={`px-8 py-3.5 rounded-xl font-bold text-lg transition-all duration-200 ${
+                    !isCorrect && !isWrong
+                      ? "bg-white/20 hover:bg-white/30 text-white/90 hover:scale-105 border border-white/20"
+                      : "bg-slate-500/20 text-slate-400 cursor-not-allowed border border-slate-500/20"
+                  }`}
+                >
+                  Skip →
+                </button>
+              </div>
             </div>
           </main>
         </div>
@@ -1908,6 +1969,7 @@ const SpellTheWordGame = () => {
           100% { transform: translateY(-100px); opacity: 0; }
         }
         .animate-float { animation: float linear infinite; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
   );

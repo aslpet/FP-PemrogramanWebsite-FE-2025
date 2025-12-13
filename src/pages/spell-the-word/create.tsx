@@ -241,6 +241,12 @@ const CreateSpellTheWord = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const [formData, setFormData] = useState<GameFormData>({
     name: "",
     description: "",
