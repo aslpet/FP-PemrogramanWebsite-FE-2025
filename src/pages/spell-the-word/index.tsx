@@ -39,29 +39,11 @@ interface GameResult {
   time_taken: number;
 }
 
-// For demo - real data comes from backend
-const DEMO_WORDS = [
-  {
-    word: "house",
-    image: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=400",
-  },
-  {
-    word: "cloud",
-    image: "https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=400",
-  },
-  {
-    word: "mouse",
-    image: "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=400",
-  },
-  {
-    word: "sound",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
-  },
-  {
-    word: "found",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
-  },
-];
+// --- ASSET PATHS (Centralized - only frequently used ones) ---
+const ASSETS = {
+  textButton: "/src/pages/spell-the-word/assets/page-2/text-button.png",
+  themeAudio: "/src/pages/spell-the-word/audio/theme.mp3",
+} as const;
 
 // --- SOUND EFFECTS HOOK ---
 const useSoundEffects = (isSoundOn: boolean) => {
@@ -173,7 +155,7 @@ const LetterTile = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        relative w-21 h-21 sm:w-24 sm:h-24 md:w-27 md:h-27
+        relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16
         select-none
         transition-all duration-300 ease-out
         ${
@@ -190,12 +172,12 @@ const LetterTile = ({
       }}
     >
       <img
-        src="/src/pages/spell-the-word/assets/page-2/text-button.png"
+        src={ASSETS.textButton}
         alt=""
         className="w-full h-full object-contain"
       />
       <span
-        className="absolute inset-0 flex items-center justify-center font-bold text-4xl sm:text-5xl md:text-6xl text-amber-900"
+        className="absolute inset-0 flex items-center justify-center font-bold text-xl sm:text-2xl md:text-3xl text-amber-900"
         style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.3)" }}
       >
         {letter.toUpperCase()}
@@ -282,7 +264,7 @@ const AnswerSlot = ({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       className={`
-        relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32
+        relative w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18
         flex items-center justify-center
         transition-all duration-300 ease-out
         ${isBeingDragged ? "opacity-30 scale-90" : ""}
@@ -309,19 +291,19 @@ const AnswerSlot = ({
       {letter ? (
         <>
           <img
-            src="/src/pages/spell-the-word/assets/page-2/text-button.png"
+            src={ASSETS.textButton}
             alt=""
             className={`w-full h-full object-contain ${isCorrect ? "brightness-125 hue-rotate-90" : isWrong ? "brightness-75 hue-rotate-180" : ""}`}
           />
           <span
-            className="absolute inset-0 flex items-center justify-center font-bold text-3xl sm:text-4xl md:text-5xl text-amber-900"
+            className="absolute inset-0 flex items-center justify-center font-bold text-xl sm:text-2xl md:text-3xl text-amber-900"
             style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.3)" }}
           >
             {letter.toUpperCase()}
           </span>
         </>
       ) : (
-        <span className="text-slate-500/70 text-2xl font-bold">_</span>
+        <span className="text-slate-500/70 text-lg font-bold">_</span>
       )}
     </div>
   );
@@ -553,7 +535,7 @@ const ResultScreen = ({
           {/* Leaderboard Box */}
           <div className="w-full bg-white/30 backdrop-blur-sm rounded-lg border border-slate-400/50 p-3">
             <h3 className="text-center text-sm font-bold text-amber-700 mb-2">
-              🏆 TOP 5 LEADERBOARD
+              🏆 TOP 3 LEADERBOARD
             </h3>
             {isLoadingLeaderboard ? (
               <div className="flex items-center justify-center py-4">
@@ -754,8 +736,8 @@ const SpellTheWordGame = () => {
   const [showImagePopup, setShowImagePopup] = useState(false);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
-  // Timer per word removed (unused)
-  const [timeLeft, setTimeLeft] = useState<number | null>(null); // Countdown
+  // Timer State
+  const [timeLeft, setTimeLeft] = useState<number | null>(null); // Countdown per word
   const [totalTime, setTotalTime] = useState(0);
 
   // Word Spelling State
@@ -797,7 +779,7 @@ const SpellTheWordGame = () => {
   // Theme Audio - plays on page load with auto-loop
   useEffect(() => {
     // Create audio element for theme music
-    const themeAudio = new Audio("/src/pages/spell-the-word/audio/theme.mp3");
+    const themeAudio = new Audio(ASSETS.themeAudio);
     themeAudio.loop = true; // Auto-loop when song ends
     themeAudio.volume = 0.3; // Background music volume (30%)
     themeAudioRef.current = themeAudio;
@@ -858,6 +840,7 @@ const SpellTheWordGame = () => {
                 w: {
                   word_text: string;
                   word_image_preview: string;
+                  word_audio_preview?: string;
                   hint?: string;
                 },
                 i: number,
@@ -903,7 +886,7 @@ const SpellTheWordGame = () => {
                 return {
                   word_index: i,
                   word_image: w.word_image_preview,
-                  word_audio: null,
+                  word_audio: w.word_audio_preview || null,
                   hint: w.hint || "",
                   letter_count: w.word_text.length,
                   shuffled_letters: shuffledLetters,
@@ -942,25 +925,7 @@ const SpellTheWordGame = () => {
         setGameData(response.data.data);
       } catch (err) {
         console.error("Failed to fetch game:", err);
-        setError("Failed to load game. Using demo data.");
-        // Fallback demo data
-        setDemoCorrectWords(DEMO_WORDS.map((w) => w.word));
-        setGameData({
-          id: id || "test",
-          name: "Spelling Practice",
-          description: "Look at the image and spell the word!",
-          thumbnail_image: null,
-          is_published: true,
-          words: DEMO_WORDS.map((w, i) => ({
-            word_index: i,
-            word_image: w.image,
-            word_audio: null,
-            hint: "",
-            letter_count: w.word.length,
-          })),
-          time_limit: 30,
-          score_per_word: 100,
-        });
+        setError("Failed to load game. Please try again later.");
       } finally {
         setIsLoading(false);
       }

@@ -241,6 +241,7 @@ const CreateSpellTheWord = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -334,6 +335,9 @@ const CreateSpellTheWord = () => {
             time_limit: gameJson.time_limit || 30,
             score_per_word: gameJson.score_per_word || 100,
           });
+
+          // Track current publish status
+          setIsPublished(data.is_published || false);
         } catch (error) {
           console.error("Failed to fetch game:", error);
           toast.error("Failed to load game data");
@@ -485,7 +489,14 @@ const CreateSpellTheWord = () => {
       const formDataToSend = new FormData();
       formDataToSend.append("name", formData.name.trim());
       formDataToSend.append("description", formData.description.trim());
-      formDataToSend.append("is_publish_immediately", String(publish));
+
+      // Different field names for create vs update per backend schema
+      if (isEditMode) {
+        formDataToSend.append("is_publish", String(publish));
+      } else {
+        formDataToSend.append("is_publish_immediately", String(publish));
+      }
+
       formDataToSend.append("score_per_word", String(formData.score_per_word));
       formDataToSend.append("time_limit", String(formData.time_limit));
 
@@ -578,8 +589,8 @@ const CreateSpellTheWord = () => {
   const handlePreview = async () => {
     if (!validateForm()) return;
 
-    // Convert image files to base64
-    const convertImageToBase64 = (file: File): Promise<string> => {
+    // Convert file to base64
+    const convertFileToBase64 = (file: File): Promise<string> => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -589,19 +600,28 @@ const CreateSpellTheWord = () => {
     };
 
     try {
-      // Convert all word images to base64
+      // Convert all word images and audio to base64
       const wordsWithBase64 = await Promise.all(
         formData.words.map(async (w) => {
           let imageData = w.word_image_preview;
+          let audioData = w.word_audio_url
+            ? `${import.meta.env.VITE_API_URL}/${w.word_audio_url}`
+            : null;
 
-          // If word has a file object, convert to base64
+          // If word has a new image file, convert to base64
           if (w.word_image) {
-            imageData = await convertImageToBase64(w.word_image);
+            imageData = await convertFileToBase64(w.word_image);
+          }
+
+          // If word has a new audio file, convert to base64
+          if (w.word_audio) {
+            audioData = await convertFileToBase64(w.word_audio);
           }
 
           return {
             word_text: w.word_text,
             word_image_preview: imageData,
+            word_audio_preview: audioData,
             hint: w.hint,
           };
         }),
@@ -654,20 +674,33 @@ const CreateSpellTheWord = () => {
             </Typography>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {isEditMode && (
+              <span
+                className={`text-xs px-2 py-1 rounded ${isPublished ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-600"}`}
+              >
+                {isPublished ? "● Published" : "○ Draft"}
+              </span>
+            )}
             <Button
               variant="outline"
               onClick={() => handleSubmit(false)}
               disabled={isSaving}
             >
-              Save as Draft
+              {isEditMode && isPublished
+                ? "Unpublish (Draft)"
+                : "Save as Draft"}
             </Button>
             <Button
               onClick={() => handleSubmit(true)}
               disabled={isSaving}
               className="bg-purple-600 hover:bg-purple-700"
             >
-              {isSaving ? "Saving..." : "Publish"}
+              {isSaving
+                ? "Saving..."
+                : isEditMode && isPublished
+                  ? "Save & Keep Published"
+                  : "Publish"}
             </Button>
           </div>
         </div>
