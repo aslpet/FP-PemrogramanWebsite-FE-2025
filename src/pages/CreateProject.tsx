@@ -47,9 +47,8 @@ export default function CreateProject() {
         setLoading(true);
         const response = await api.get("/api/game/template");
         setTemplates(response.data.data);
-      } catch (err) {
+      } catch {
         setError("Failed to fetch game templates. Please try again later.");
-        console.error("Failed to fetch templates:", err);
       } finally {
         setLoading(false);
       }
