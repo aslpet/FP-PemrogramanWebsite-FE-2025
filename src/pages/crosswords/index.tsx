@@ -174,7 +174,7 @@ export default function PlayCrossword() {
   }, [id, navigate]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: number;
     if (game && !isPaused && !isFinished) {
       interval = setInterval(() => {
         setTimer((prev) => prev + 1);
@@ -521,7 +521,9 @@ export default function PlayCrossword() {
                     </span>
                   )}
                   <input
-                    ref={(el) => (inputRefs.current[r][c] = el)}
+                    ref={el => {
+                      inputRefs.current[r][c] = el;
+                    }}
                     type="text"
                     maxLength={1}
                     disabled={isPaused || isFinished}
