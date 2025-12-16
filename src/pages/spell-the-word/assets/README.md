@@ -24,10 +24,12 @@ assets/
 ## Ukuran yang Disarankan
 
 ### Backgrounds
+
 - **Resolusi**: 1920x1080 px (Full HD) atau lebih tinggi
 - **Format**: PNG atau JPG (PNG untuk transparansi)
 
 ### Buttons
+
 - **Ukuran**: Sesuaikan dengan desain, umumnya:
   - Primary buttons (Start, Submit): ~300x80 px
   - Secondary buttons (Skip, Exit): ~200x60 px
